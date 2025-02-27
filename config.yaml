@@ -1,0 +1,19 @@
+app:
+  name: "文件加密工具"          # 项目名称
+  version: "0.1.0"             # 版本号
+  author: "Kris"               # 作者
+  release_time: "2025-02-28"   # 发布时间
+
+path:
+  db_file: "db_data/data.db"    # 数据库文件路径
+  upload: "upload"              # 文件上传路径
+  download: "download"          # 文件下载路径
+
+security:
+  default_algorithm: "AES"      # 默认使用加密算法
+  algorithms:                   # 支持算法
+    - "AES"
+    - "DES/3DES"
+    - "SM4"
+
+other:
