@@ -1,0 +1,9 @@
+# virtualenv
+.venv
+
+# cache
+**/*__pycache__
+**/*.pyc
+
+# file
+**/*.enc
