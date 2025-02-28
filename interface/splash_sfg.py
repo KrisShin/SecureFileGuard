@@ -11,7 +11,6 @@ class SplashScreen(QWidget):
     def __init__(self):
         super().__init__()
         self.original_pixmap = QPixmap(Path(config.path.static) / SPLASH_FILE)
-        self.blur_radius = 15
 
         # 窗口初始化设置
         self.setWindowFlag(Qt.FramelessWindowHint)  # 无边框
@@ -72,7 +71,7 @@ class SplashScreen(QWidget):
         item = QGraphicsPixmapItem(pixmap)
 
         blur = QGraphicsBlurEffect()
-        blur.setBlurRadius(self.blur_radius)
+        blur.setBlurRadius(9)
         item.setGraphicsEffect(blur)
 
         scene.addItem(item)

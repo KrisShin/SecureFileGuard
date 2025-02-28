@@ -3,6 +3,7 @@ import sqlite3
 from contextlib import contextmanager
 from typing import List, Dict
 from setting.config_loader import config
+from util.tool import get_password_hash
 
 
 class DBManager(object):
@@ -24,13 +25,22 @@ class DBManager(object):
             # 执行所有建表SQL
             conn.executescript(SQL_CREATE_TABLES)
 
+    def init_amdin_user(self) -> dict:
+        with self._get_connection() as conn:
+            cursor = conn.execute('''SELECT * FROM sfg_user WHERE username='admin' ''')
+            admin_user = cursor.fetchone()
+            if not admin_user:
+                password = get_password_hash(config.other.default_admin_password)
+                conn.execute('''INSERT INTO sfg_user (username, password) VALUES (?, ?)''', ('admin', password))
+                conn.commit()
+
     # 用户操作示例
     def create_user(self, user_data: Dict) -> bool:
         with self._get_connection() as conn:
             try:
                 conn.execute(
                     '''
-                    INSERT INTO user (username, password_hash, password_salt, ...)
+                    INSERT INTO sfg_user (username, password, ...)
                     VALUES (?, ?, ?, ...)
                 ''',
                     (user_data['username'], ...),

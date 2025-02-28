@@ -9,6 +9,7 @@ from setting.config_loader import config
 from db_data.manager import db  # 初始化数据库
 
 if __name__ == "__main__":
+    db.init_amdin_user()
     app = QApplication(sys.argv)
 
     # 第一步：显示启动页
