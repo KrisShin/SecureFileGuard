@@ -25,7 +25,7 @@ class SplashScreen(QWidget):
         self.init_font()
 
         # 自动关闭定时器
-        QTimer.singleShot(config.other.splash_timeout, self.close)
+        # QTimer.singleShot(config.other.splash_timeout, self.close)
 
     def init_font(self):
         """加载字体资源"""

@@ -1,4 +1,5 @@
 import sys
+import time
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 
@@ -18,7 +19,11 @@ if __name__ == "__main__":
     # 设置定时器
     QTimer.singleShot(
         config.other.splash_timeout,
-        lambda: (splash.close(), login_window.show(), splash.deleteLater()),  # 显示登录窗口  # 关闭启动页  # 释放启动页内存
+        lambda: (
+            login_window.show(),
+            splash.close(),
+            splash.deleteLater(),
+        ),  # 显示登录窗口  # 关闭启动页  # 释放启动页内存
     )
 
     app.exec()
