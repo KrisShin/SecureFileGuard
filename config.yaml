@@ -2,9 +2,10 @@ app:
   name: "文件加密工具"          # 项目名称
   version: "0.1.0"             # 版本号
   author: "Kris"               # 作者
-  release_time: "2025-02-28"   # 发布时间
+  release_date: "2025-02-28"   # 发布日期
 
 path:
+  static: "assets"             # 静态文件路径
   db_file: "db_data/data.db"    # 数据库文件路径
   upload: "upload"              # 文件上传路径
   download: "download"          # 文件下载路径
@@ -17,3 +18,6 @@ security:
     - "SM4"
 
 other:
+  width: 900                    # 窗口宽度
+  height: 600                   # 窗口高度
+  splash_timeout: 3000           # 欢迎屏幕持续时间

@@ -7,8 +7,8 @@
 | --- | --- | --- |
 | Windows | 11 | x64 |
 | Python | 3.12.9 | x64 |
-| PySide6 | 6 | 基于QT6 |
-| PyYaml |  | 用于配置解析 |
+| PySide6 | 6.8.2.1 | 基于QT6, 包含addon和essential |
+| PyYaml | 6.0.2 | 用于配置解析 |
 | SQLite |  | 轻量级数据库 |
 | cryptography |  | 加密模块 支持AES,DES/3DES |
 | pysm4 |  | 加密模块 支持SM4 |
