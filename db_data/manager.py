@@ -2,6 +2,7 @@
 import sqlite3
 from contextlib import contextmanager
 from typing import List, Dict
+from setting.config_loader import config
 
 
 class DBManager(object):
@@ -70,18 +71,22 @@ class DBManager(object):
 
 # 建表语句示例
 SQL_CREATE_TABLES = '''
-CREATE TABLE IF NOT EXISTS user (
+CREATE TABLE IF NOT EXISTS sfg_user (
     username VARCHAR(50) PRIMARY KEY,          -- 账号（主键）
-    password_hash CHAR(128) NOT NULL,         -- 加密后的密码
-    password_salt CHAR(32) NOT NULL,           -- 密码盐值
-    role ENUM('user','admin') DEFAULT 'user',  -- 角色
+    password CHAR(256) NOT NULL,               -- 加密后的密码
+    role TEXT CHECK(role IN ('user', 'admin')) DEFAULT 'user',  -- 用户角色
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_login DATETIME,                      -- 最后登录时间
-    phone VARCHAR(20) UNIQUE,                 -- 唯一手机号
-    email VARCHAR(100) UNIQUE,                -- 唯一邮箱
-    is_locked BOOLEAN DEFAULT FALSE,          -- 账户锁定状态
+    last_login DATETIME,                       -- 最后登录时间
+    phone VARCHAR(20) UNIQUE,                  -- 唯一手机号
+    email VARCHAR(100) UNIQUE,                 -- 唯一邮箱
+    is_locked BOOLEAN DEFAULT FALSE            -- 删除末尾的逗号
 );
-CREATE TABLE IF NOT EXISTS encrypted_file (
+
+-- 用户表索引
+CREATE INDEX IF NOT EXISTS idx_user_role ON sfg_user(role);
+CREATE INDEX IF NOT EXISTS idx_user_lock ON sfg_user(is_locked);
+
+CREATE TABLE IF NOT EXISTS sfg_encrypted_file (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     storage_path TEXT NOT NULL,               -- 加密后存储路径
     original_name VARCHAR(255) NOT NULL,      -- 原始文件名
@@ -96,30 +101,25 @@ CREATE TABLE IF NOT EXISTS encrypted_file (
     is_public BOOLEAN DEFAULT FALSE,          -- 是否公开
     FOREIGN KEY (user_name) REFERENCES user(username)
 );
-CREATE TABLE audit_log (
+-- 文件表索引
+CREATE INDEX IF NOT EXISTS idx_file_algorithm ON sfg_encrypted_file(algorithm);
+CREATE INDEX IF NOT EXISTS idx_file_user ON sfg_encrypted_file(user_name);
+CREATE INDEX IF NOT EXISTS idx_file_public ON sfg_encrypted_file(is_public);
+
+CREATE TABLE IF NOT EXISTS sfg_audit_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_name VARCHAR(50) NOT NULL,           -- 操作用户
     action_type VARCHAR(50) NOT NULL,         -- 操作类型：login/upload/delete
     action_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     file_id INTEGER NOT NULL,                 -- 文件id
-    result ENUM('success','failed') NOT NULL, -- 操作结果
+    result TEXT CHECK(result IN('success','failed')) NOT NULL, -- 操作结果
     details TEXT,                             -- 详细日志
     FOREIGN KEY (user_name) REFERENCES user(username)
     FOREIGN KEY (file_id) REFERENCES encrypted_file(id)
 );
-
--- 用户表索引
-CREATE INDEX idx_user_role ON user(role);
-CREATE INDEX idx_user_email ON user(email);
-
--- 文件表索引
-CREATE INDEX idx_file_algorithm ON encrypted_file(algorithm);
-CREATE INDEX idx_file_user ON encrypted_file(user_id);
-CREATE INDEX idx_file_public ON encrypted_file(is_public);
-
 -- 日志表索引
-CREATE INDEX idx_log_action ON audit_log(action_type);
-CREATE INDEX idx_log_time ON audit_log(action_time);
+CREATE INDEX IF NOT EXISTS idx_log_action ON sfg_audit_log(action_type);
+CREATE INDEX IF NOT EXISTS idx_log_user ON sfg_audit_log(user_name);
 '''
 
-db = DBManager()
+db = DBManager(config.path.db_file)
