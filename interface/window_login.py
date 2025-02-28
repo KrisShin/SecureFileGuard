@@ -1,21 +1,24 @@
 from pathlib import Path
 import re
 from PySide6.QtWidgets import (
+    QApplication,
     QWidget,
     QLineEdit,
     QPushButton,
     QVBoxLayout,
     QMessageBox,
     QLabel,
-    QCheckBox,
     QHBoxLayout,
     QDialog,
     QFormLayout,
 )
-from PySide6.QtCore import Signal, QSettings, Qt
+from PySide6.QtCore import Signal, Qt, QTimer
 from PySide6.QtGui import QPixmap
 
+from db_data.manager import db
+from module.user_apis import verify_password
 from setting.config_loader import config
+from setting.global_variant import GlobalCache
 from setting.window_main import MainWindow
 
 
@@ -24,10 +27,11 @@ class LoginWindow(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.cache = GlobalCache()
         self.setWindowTitle("登录")
         self.resize(config.other.width, config.other.height)
+        self.main_window = MainWindow()
         self.setup_ui()
-        self.load_saved_account()
 
     def setup_ui(self):
         # 背景设置
@@ -175,16 +179,30 @@ class LoginWindow(QWidget):
         # 提交验证
         def submit():
             # 此处添加数据库插入逻辑
-            if not all([reg_username.text(), reg_password.text(), reg_phone.text(), reg_email.text()]):
-                QMessageBox.warning(dialog, "错误", "请填写所有字段")
+            if not all([reg_username.text(), reg_password.text()]):
+                QMessageBox.warning(dialog, "错误", "用户名和密码必填")
                 return
+            user_data = {
+                'username': reg_username.text(),
+                'password': reg_password.text(),
+            }
 
-            # 验证手机和邮箱格式（示例）
-            if not re.match(r'^1[3-9]\d{9}$', reg_phone.text()):
-                QMessageBox.warning(dialog, "错误", "手机号格式不正确")
-                return
+            # 验证手机格式
+            if reg_phone.text():
+                if not re.match(r'^1[3-9]\d{9}$', reg_phone.text()):
+                    QMessageBox.warning(dialog, "错误", "手机号格式不正确")
+                    return
+                user_data['phone'] = reg_phone.text()
+
+            # 验证邮箱格式
+            if reg_email.text():
+                if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', reg_email.text()):
+                    QMessageBox.warning(dialog, "错误", "邮箱格式不正确")
+                    return
+                user_data['email'] = reg_email.text()
 
             dialog.accept()
+            db.create_user(user_data)
             QMessageBox.information(self, "成功", "注册成功，请登录")
 
         btn_submit.clicked.connect(submit)
@@ -196,34 +214,23 @@ class LoginWindow(QWidget):
         username = self.username.text()
         password = self.password.text()
 
+        if not all((username, password)):
+            QMessageBox.warning(self, "错误", "请输入用户名和密码")
+            return
+        user_obj = db.get_user(username)
+        if not user_obj:
+            QMessageBox.warning(self, "错误", "用户名不存在, 请先注册")
+            return
+
         # 数据库验证逻辑应在此处实现
-        if username == "admin" and password == "123456":
-            if self.remember_me.isChecked():
-                self.save_account(username, password)
+        if verify_password(password, user_obj['password']):
             self.login_success.emit()
-            self.close()
+            self.cache.current_user = user_obj
+            self.show_main()
+            QTimer.singleShot(0, self.close)
         else:
-            QMessageBox.warning(self, "错误", "认证失败")
-
-    def save_account(self, user, pwd):
-        """保存账号信息到本地"""
-        # 应使用加密存储（示例用QSettings）
-        settings = QSettings("MyApp", "Auth")
-        settings.setValue("username", user)
-        settings.setValue("password", pwd)
-
-    def load_saved_account(self):
-        """加载保存的账号"""
-        settings = QSettings("MyApp", "Auth")
-        user = settings.value("username", "")
-        pwd = settings.value("password", "")
-
-        if user:
-            self.username.setText(user)
-            self.password.setText(pwd)
-            self.remember_me.setChecked(True)
+            QMessageBox.warning(self, "错误", "密码错误")
 
     def show_main(self):
-        # 主窗口显示逻辑不变
-        main_window = MainWindow()
-        main_window.show()
+        self.main_window.destroyed.connect(QApplication.quit)
+        self.main_window.show()

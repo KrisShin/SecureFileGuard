@@ -1,9 +1,9 @@
 # db/db_manager.py
-import sqlite3
+from sqlite3 import connect, Row
 from contextlib import contextmanager
 from typing import List, Dict
 from setting.config_loader import config
-from util.tool import get_password_hash
+from module.user_apis import get_password_hash
 
 
 class DBManager(object):
@@ -13,8 +13,8 @@ class DBManager(object):
 
     @contextmanager
     def _get_connection(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row  # 支持字典式访问
+        conn = connect(self.db_path)
+        conn.row_factory = Row  # 支持字典式访问
         try:
             yield conn
         finally:
@@ -26,26 +26,46 @@ class DBManager(object):
             conn.executescript(SQL_CREATE_TABLES)
 
     def init_amdin_user(self) -> dict:
-        with self._get_connection() as conn:
-            cursor = conn.execute('''SELECT * FROM sfg_user WHERE username='admin' ''')
-            admin_user = cursor.fetchone()
-            if not admin_user:
-                password = get_password_hash(config.other.default_admin_password)
-                conn.execute('''INSERT INTO sfg_user (username, password) VALUES (?, ?)''', ('admin', password))
+        """初始化管理员用户"""
+        admin_obj = self.get_user('admin')
+        if not admin_obj:
+            password = get_password_hash(config.other.default_admin_password)
+            with self._get_connection() as conn:
+                conn.execute('''INSERT INTO sfg_user (username, password, role) VALUES (?, ?, ?)''', ('admin', password, 'admin'))
                 conn.commit()
+
+    def get_user(self, username) -> dict:
+        """根据用户名查询用户信息"""
+        with self._get_connection() as conn:
+            cursor = conn.execute('''SELECT * FROM sfg_user WHERE username=? ''', (username,))
+            user_obj = cursor.fetchone()
+            return dict(user_obj)
+
+    def get_user_list(self, params: dict) -> List[dict]:
+        """根据用户名查询用户信息"""
+        with self._get_connection() as conn:
+            sql_str = """SELECT * FROM sfg_user"""
+            sql_params = None
+            if params:
+                sql_params = []
+                [sql_params.extend([k, v]) for k, v in params.items()]
+                sql_str += 'WHERE' + ' '.join(['?=?' for _ in range(len(sql_params))])
+            cursor = conn.execute(sql_str, sql_params)
+
+            user_obj = cursor.fetchone()
+            return dict(user_obj)
 
     # 用户操作示例
     def create_user(self, user_data: Dict) -> bool:
+        password = get_password_hash(user_data['password'])
         with self._get_connection() as conn:
             try:
                 conn.execute(
-                    '''
-                    INSERT INTO sfg_user (username, password, ...)
-                    VALUES (?, ?, ?, ...)
-                ''',
-                    (user_data['username'], ...),
+                    '''INSERT INTO sfg_user (username, password, phone, email) VALUES (?, ?, ?, ?)''',
+                    (user_data['username'], password, user_data.get('phone'), user_data.get('email')),
                 )
                 conn.commit()
+                print(f"用户{user_data['username']} 注册成功")
                 return True
             except sqlite3.IntegrityError:
                 return False
