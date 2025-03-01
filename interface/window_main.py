@@ -12,7 +12,7 @@ from setting.global_variant import gcache
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("主界面")
+        self.setWindowTitle(f"{config.app.name} - v{config.app.version}({config.app.release_date})")
         self.resize(config.other.width, config.other.height)
         self.user = gcache.current_user
         self.init_ui()
