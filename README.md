@@ -1,6 +1,5 @@
 # SecureFileGuard
 
-
 # 1. 开发环境
 
 | 环境 | 版本 | 备注 |
@@ -18,7 +17,7 @@
 
 # 2. 用户模块
 
-- [ ]  用户注册
+- [x]  用户注册
     - 账号(主键)
     - 密码
     - 角色(用户/管理员)
@@ -26,7 +25,7 @@
     - 上次登录时间
     - 电话
     - 邮箱
-- [ ]  用户登录
+- [x]  用户登录
 - [ ]  用户注销
 - [ ]  修改密码
 - [ ]  修改个人信息
@@ -34,8 +33,9 @@
 
 # 3. 界面模块
 
-- [ ]  欢迎页面
-- [ ]  登陆页面
+- [x]  欢迎页面
+- [x]  登陆页面
+- [x]  注册窗口
 - [ ]  主页面(文件列表)
 - [ ]  文件上传页
 - [ ]  文件下载页
@@ -77,23 +77,31 @@
 - salt(盐)
 - 密码(加密后的密码字符串)
 
-## 5. 配置文件
+# 5. 配置文件
+
 ```yaml
 app:
-  name: “项目名称”
-  version: “版本号”
-  author: “作者”
-  release_time: ”发布时间”
+  name: "文件加密工具"          # 项目名称
+  version: "0.1.0"             # 版本号
+  author: "Kris"               # 作者
+  release_date: "2025-02-28"   # 发布日期
+
 path:
-  db_file: “数据库文件路径”
-  upload: “默认文件管理路径”
-  download: “默认下载路径”
+  static: "assets"             # 静态文件路径
+  db_file: "db_data/data.db"    # 数据库文件路径
+  upload: "upload"              # 文件上传路径
+  download: "download"          # 文件下载路径
+
 security:
-  default_algorithm: “默认算法AES”
-  algorithms:
-    - “AES”
-    - ”DES/3DES”
-    - ”SM4”
+  default_algorithm: "AES"      # 默认使用加密算法
+  algorithms:                   # 支持算法
+    - "AES"
+    - "DES/3DES"
+    - "SM4"
+
 other:
-  其他需要存储的内容
+  width: 900                    # 窗口宽度
+  height: 600                   # 窗口高度
+  splash_timeout: 1000           # 欢迎屏幕持续时间
+  default_admin_password: '123qwe' # 默认管理员密码
 ```
