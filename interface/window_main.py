@@ -3,6 +3,8 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QP
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap
 
+from interface.widget_edit_password import set_change_password_ui
+from interface.widget_edit_profile import set_edit_profile_ui
 from setting.config_loader import config
 from setting.global_variant import gcache
 
@@ -43,6 +45,7 @@ class MainWindow(QMainWindow):
 
         # 初始化菜单
         self.init_menu()
+        self.open_password_change()
 
     def set_background(self, img_path):
         """设置背景"""
@@ -127,12 +130,10 @@ class MainWindow(QMainWindow):
         # 清空右侧区域并加载对应内容
 
     def open_profile_edit(self):
-        print("打开个人编辑")
-        # 清空右侧区域并加载对应内容
+        set_edit_profile_ui(self, self.content_widget)
 
     def open_password_change(self):
-        print("打开密码修改")
-        # 清空右侧区域并加载对应内容
+        set_change_password_ui(self, self.content_widget)
 
     def open_user_management(self):
         print("打开用户管理")

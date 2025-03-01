@@ -1,9 +1,10 @@
 # db/db_manager.py
 from sqlite3 import connect, Row
 from contextlib import contextmanager
+import sqlite3
 from typing import List, Dict
 from setting.config_loader import config
-from module.user_apis import get_password_hash
+from module.common import get_password_hash
 
 
 class DBManager(object):
@@ -39,21 +40,23 @@ class DBManager(object):
         with self._get_connection() as conn:
             cursor = conn.execute('''SELECT * FROM sfg_user WHERE username=? ''', (username,))
             user_obj = cursor.fetchone()
-            return dict(user_obj)
+            return user_obj and dict(user_obj)
 
     def get_user_list(self, params: dict) -> List[dict]:
         """根据用户名查询用户信息"""
         with self._get_connection() as conn:
-            sql_str = """SELECT * FROM sfg_user"""
-            sql_params = None
+            sql_str = """SELECT * FROM sfg_user """
+            sql_values = None
             if params:
-                sql_params = []
-                [sql_params.extend([k, v]) for k, v in params.items()]
-                sql_str += 'WHERE' + ' '.join(['?=?' for _ in range(len(sql_params))])
-            cursor = conn.execute(sql_str, sql_params)
-
-            user_obj = cursor.fetchone()
-            return dict(user_obj)
+                sql_keys = []
+                sql_values = []
+                for key, value in params.items():
+                    sql_keys.append(f'"{key}"=?')
+                    sql_values.append(value)
+                sql_str += 'WHERE ' + ' and '.join(sql_keys)
+            cursor = conn.execute(sql_str, sql_values)
+            rows = cursor.fetchall()
+            return rows and [dict(user_obj) for user_obj in rows]
 
     # 用户操作示例
     def create_user(self, user_data: Dict) -> bool:
@@ -66,6 +69,36 @@ class DBManager(object):
                 )
                 conn.commit()
                 print(f"用户{user_data['username']} 注册成功")
+                return True
+            except sqlite3.IntegrityError:
+                return False
+
+    def update_user_info(self, username: str, params: dict) -> Dict:
+        sql_str = """update sfg_user set """
+        if not params:
+            return
+        sql_keys = []
+        sql_values = []
+        for key, value in params.items():
+            sql_keys.append(f'"{key}"=?')
+            sql_values.append(value)
+        sql_str += ' , '.join(sql_keys)
+        sql_values.append(username)
+        with self._get_connection() as conn:
+            try:
+                conn.execute(f'''{sql_str} where username = ?''', sql_values)
+                conn.commit()
+                print(f"用户{username} 更新成功")
+                return True
+            except sqlite3.IntegrityError:
+                return False
+
+    def update_user_last_login(self, username: str):
+        with self._get_connection() as conn:
+            try:
+                conn.execute('''UPDATE sfg_user SET last_login = CURRENT_TIMESTAMP where username=? ''', (username,))
+                conn.commit()
+                print(f"用户{username} 登录成功")
                 return True
             except sqlite3.IntegrityError:
                 return False
