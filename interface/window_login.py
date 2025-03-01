@@ -18,8 +18,8 @@ from PySide6.QtGui import QPixmap
 from db_data.manager import db
 from module.user_apis import verify_password
 from setting.config_loader import config
-from setting.global_variant import GlobalCache
-from setting.window_main import MainWindow
+from setting.global_variant import gcache
+from interface.window_main import MainWindow
 
 
 class LoginWindow(QWidget):
@@ -27,10 +27,8 @@ class LoginWindow(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.cache = GlobalCache()
         self.setWindowTitle("登录")
         self.resize(config.other.width, config.other.height)
-        self.main_window = MainWindow()
         self.setup_ui()
 
     def setup_ui(self):
@@ -43,6 +41,10 @@ class LoginWindow(QWidget):
         self.password = QLineEdit(placeholderText="请输入密码", echoMode=QLineEdit.Password)
         self.btn_login = QPushButton("登 录", objectName="btnLogin")
         self.btn_register = QPushButton("注 册", objectName="btnRegister")
+
+        # TODO: 测试使用账号密码
+        self.username.setText('admin')
+        self.password.setText('123qwe')
 
         # 表单布局
         form_layout = QFormLayout()
@@ -224,10 +226,11 @@ class LoginWindow(QWidget):
 
         # 数据库验证逻辑应在此处实现
         if verify_password(password, user_obj['password']):
+            gcache.current_user = user_obj
+            self.main_window = MainWindow()
             self.login_success.emit()
-            self.cache.current_user = user_obj
             self.show_main()
-            QTimer.singleShot(0, self.close)
+            QTimer.singleShot(200, self.close)
         else:
             QMessageBox.warning(self, "错误", "密码错误")
 

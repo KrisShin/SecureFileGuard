@@ -14,7 +14,7 @@ class GlobalCache(QObject):
     def __new__(cls):
         if not cls._instance:
             cls._instance = super().__new__(cls)
-            cls._instance._current_user = ""
+            cls._instance._current_user = {}
             cls._instance._settings = QSettings("Kris", "SecureFileGuard")
         return cls._instance
 
@@ -36,3 +36,6 @@ class GlobalCache(QObject):
     def load_setting(self, key: str, default=None):
         """从配置文件加载"""
         return self._settings.value(key, default)
+
+
+gcache = GlobalCache()
