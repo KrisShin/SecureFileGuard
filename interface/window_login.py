@@ -1,5 +1,4 @@
 from pathlib import Path
-import re
 from PySide6.QtWidgets import (
     QApplication,
     QWidget,
@@ -9,13 +8,12 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QLabel,
     QHBoxLayout,
-    QDialog,
     QFormLayout,
 )
 from PySide6.QtCore import Signal, Qt, QTimer
 from PySide6.QtGui import QPixmap
 
-from db_data.manager import db
+from module.custom_widget import PasswordToggleWidget
 from module.user_apis import login, register
 from setting.config_loader import config
 from interface.window_main import MainWindow
@@ -46,7 +44,7 @@ class LoginWindow(QWidget):
     def authenticate(self):
         # 简化版验证逻辑
         username = self.username.text()
-        password = self.password.text()
+        password = self.password_widget.text()
 
         if not all((username, password)):
             QMessageBox.warning(self, "错误", "请输入用户名和密码")
@@ -69,12 +67,15 @@ class LoginWindow(QWidget):
         # 背景设置
         self.background = QLabel(self)
         self.set_background(Path(config.path.static) / 'bg.png')
-
         # 主控件
         self.username = QLineEdit(placeholderText="请输入用户名")
-        self.password = QLineEdit(placeholderText="请输入密码", echoMode=QLineEdit.Password)
-        self.phone = QLineEdit(placeholderText="请输入手机号")  # 新增字段
-        self.email = QLineEdit(placeholderText="请输入邮箱")  # 新增字段
+
+        # 自定义密码组件
+        self.password_widget = PasswordToggleWidget()
+
+        # 额外的字段（用于注册）
+        self.phone = QLineEdit(placeholderText="请输入手机号")
+        self.email = QLineEdit(placeholderText="请输入邮箱")
 
         # 初始隐藏注册字段
         self.phone.hide()
@@ -84,18 +85,17 @@ class LoginWindow(QWidget):
         self.btn_switch = QPushButton("前往注册", objectName="btnSwitch")
         self.btn_submit = QPushButton("登 录", objectName="btnSubmit")
 
-        # 测试数据
+        # TODO: 测试数据
         self.username.setText('admin')
-        self.password.setText('123qwe')
+        self.password_widget.setText('123qwe')
 
         # 表单布局
         form_layout = QFormLayout()
-        form_layout.setRowWrapPolicy(QFormLayout.DontWrapRows)
         form_layout.setLabelAlignment(Qt.AlignRight)
         form_layout.addRow(QLabel("用户名："), self.username)
-        form_layout.addRow(QLabel("密码："), self.password)
-        form_layout.addRow(QLabel("手机号："), self.phone)  # 初始隐藏行
-        form_layout.addRow(QLabel("邮箱："), self.email)  # 初始隐藏行
+        form_layout.addRow(QLabel("密码："), self.password_widget)  # 使用密码容器
+        form_layout.addRow(QLabel("手机号："), self.phone)
+        form_layout.addRow(QLabel("邮箱："), self.email)
 
         # 动态调整行可见性
         self.phone.label = form_layout.labelForField(self.phone)
@@ -195,7 +195,7 @@ class LoginWindow(QWidget):
         """处理注册逻辑"""
         regist_data = {
             'username': self.username.text().strip(),
-            'password': self.password.text().strip(),
+            'password': self.password_widget.text().strip(),
             'phone': self.phone.text().strip() or None,
             'email': self.email.text().strip() or None,
         }

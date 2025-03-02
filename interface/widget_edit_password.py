@@ -4,7 +4,6 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QVBoxLayout,
     QFormLayout,
-    QLineEdit,
     QPushButton,
     QMessageBox,
     QLabel,
@@ -13,7 +12,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 
 from module.common import generate_strong_password
-from module.user_apis import change_password, edit_profile
+from module.custom_widget import PasswordToggleWidget
+from module.user_apis import change_password
 from setting.global_variant import gcache
 
 
@@ -67,13 +67,15 @@ def _build_password_form(main_window: QMainWindow, container: QWidget):
     form_layout.setVerticalSpacing(25)
     form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
-    # 联系电话
-    main_window.org_password_edit = QLineEdit(placeholderText="请输入原密码", echoMode=QLineEdit.Password)
+    # 原密码
+    main_window.org_password_edit = PasswordToggleWidget(placeholder='请输入原密码')
     main_window.org_password_edit.setFixedHeight(35)
+    main_window.org_password_edit.setStyleSheet("border: 1px solid #fff; height:30px;border-radius: 8px; background: rgba(0, 0, 0, 0.2);")
 
-    # 电子邮箱
-    main_window.new_password_edit = QLineEdit(placeholderText="请输入新密码", echoMode=QLineEdit.Password)
+    # 新密码
+    main_window.new_password_edit = PasswordToggleWidget(placeholder='请输入新密码')
     main_window.new_password_edit.setFixedHeight(35)
+    main_window.new_password_edit.setStyleSheet("border: 1px solid #fff; height:30px;border-radius: 8px; background: rgba(0, 0, 0, 0.2);")
 
     label_phone = QLabel("原密码：")
     label_email = QLabel("新密码：")
