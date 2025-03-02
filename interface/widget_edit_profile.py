@@ -33,7 +33,6 @@ def set_edit_profile_ui(main_window: QMainWindow, content_widget: QWidget):
 
     # 创建表单容器（带固定高度）
     form_container = QWidget()
-    form_container.setFixedSize(500, 300)  # 固定表单尺寸
     form_container.setStyleSheet(
         """
         background: rgba(0,0,0,0.2);

@@ -2,21 +2,22 @@ from PySide6.QtWidgets import QWidget, QLineEdit, QToolButton, QHBoxLayout
 
 
 class PasswordToggleWidget(QWidget):
-    def __init__(self, parent=None, placeholder: str = '请输入密码'):
+    def __init__(self, parent=None, placeholder: str = '请输入密码', style: str = ''):
         super().__init__(parent)
         self.placeholder = placeholder
+        self.css = style
         self.init_ui()
 
     def init_ui(self):
         # 创建密码输入框和眼睛按钮
         self.password = QLineEdit(self, placeholderText=self.placeholder)
         self.password.setEchoMode(QLineEdit.Password)
-        self.password.setStyleSheet("background: transparent;")
+        self.password.setStyleSheet(f"{self.css}")
 
         self.toggle_button = QToolButton(self)
         self.toggle_button.setCheckable(True)
         self.toggle_button.setText("👁")  # 可以替换为 QIcon
-        self.toggle_button.setStyleSheet("border: none; padding: 2px; background: transparent;")
+        self.toggle_button.setStyleSheet(f"border: none; padding: 2px; background: transparent;")
 
         # 绑定切换事件
         self.toggle_button.toggled.connect(self.toggle_password_visibility)

@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 from passlib.context import CryptContext
 import random
 import string
@@ -49,3 +51,9 @@ def generate_strong_password():
         ):
             break
     return password
+
+
+def create_dir_if_not_exists(file_path: Path):
+    """创建文件夹路径"""
+    if not os.path.exists(file_path.parent):
+        os.makedirs(file_path.parent)

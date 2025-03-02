@@ -5,6 +5,8 @@ from PySide6.QtGui import QPixmap
 
 from interface.widget_edit_password import set_change_password_ui
 from interface.widget_edit_profile import set_edit_profile_ui
+from interface.widget_file_edit import setup_file_edit_ui
+from interface.widget_file_upload import setup_file_upload_ui
 from setting.config_loader import config
 from setting.global_variant import gcache
 
@@ -16,6 +18,7 @@ class MainWindow(QMainWindow):
         self.resize(config.other.width, config.other.height)
         self.user = gcache.current_user
         self.init_ui()
+        self.open_file_upload()
 
     def init_ui(self):
         # 创建主布局容器
@@ -45,7 +48,6 @@ class MainWindow(QMainWindow):
 
         # 初始化菜单
         self.init_menu()
-        self.open_password_change()
 
     def set_background(self, img_path):
         """设置背景"""
@@ -122,12 +124,10 @@ class MainWindow(QMainWindow):
         # 清空右侧区域并加载对应内容
 
     def open_file_upload(self):
-        print("打开文件上传")
-        # 清空右侧区域并加载对应内容
+        setup_file_upload_ui(self, self.content_widget)
 
     def open_file_edit(self):
-        print("打开文件编辑")
-        # 清空右侧区域并加载对应内容
+        setup_file_edit_ui(self, self.content_widget)
 
     def open_profile_edit(self):
         set_edit_profile_ui(self, self.content_widget)
