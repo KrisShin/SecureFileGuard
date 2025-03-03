@@ -7,6 +7,7 @@ from interface.widget_edit_password import set_change_password_ui
 from interface.widget_edit_profile import set_edit_profile_ui
 from interface.widget_file_edit import setup_file_edit_ui
 from interface.widget_file_upload import setup_file_upload_ui
+from interface.widget_user_manage import set_user_manage_ui
 from setting.config_loader import config
 from setting.global_variant import gcache
 
@@ -136,8 +137,8 @@ class MainWindow(QMainWindow):
         set_change_password_ui(self, self.content_widget)
 
     def open_user_management(self):
-        print("打开用户管理")
         # 管理员专属功能
+        set_user_manage_ui(self, self.content_widget)
 
     def logout(self):
         """退出登录处理"""

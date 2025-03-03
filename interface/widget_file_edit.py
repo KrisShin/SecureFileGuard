@@ -175,7 +175,7 @@ def _build_edit_form(main_window: QMainWindow, container: QWidget):
         """
     )
 
-    container.generate_btn.clicked.connect(lambda: (handel_set_strong_password(container)))
+    container.generate_btn.clicked.connect(lambda: (handle_set_strong_password(container)))
     # 提交按钮
     container.btn_submit = QPushButton("提交")
     container.btn_submit.setFixedSize(150, 40)
@@ -258,7 +258,7 @@ def set_widget_unlock(main_window: QMainWindow, container: QWidget, unlock: bool
         main_window.unlock = unlock
 
 
-def handel_set_strong_password(container: QWidget):
+def handle_set_strong_password(container: QWidget):
     password = generate_strong_password()
     container.password.setText(password)
     clipboard = QApplication.clipboard()

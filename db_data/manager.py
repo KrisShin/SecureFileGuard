@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS sfg_user (
     last_login DATETIME,                       -- 最后登录时间
     phone VARCHAR(20) UNIQUE,                  -- 唯一手机号
     email VARCHAR(100) UNIQUE,                 -- 唯一邮箱
-    is_locked BOOLEAN DEFAULT FALSE            -- 删除末尾的逗号
+    is_locked BOOLEAN DEFAULT FALSE            -- 是否锁定(禁止登录)
 );
 
 -- 用户表索引

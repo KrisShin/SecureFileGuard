@@ -104,7 +104,7 @@ def _build_password_form(main_window: QMainWindow, container: QWidget):
         """
     )
 
-    generate_btn.clicked.connect(lambda: (handel_set_strong_password(main_window)))
+    generate_btn.clicked.connect(lambda: (handle_set_strong_password(main_window)))
 
     submit_btn = QPushButton("提交修改")
     submit_btn.setFixedSize(150, 40)
@@ -135,7 +135,7 @@ def _build_password_form(main_window: QMainWindow, container: QWidget):
     container.layout().addStretch(1)
 
 
-def handel_set_strong_password(main_window: QMainWindow):
+def handle_set_strong_password(main_window: QMainWindow):
     password = generate_strong_password()
     main_window.new_password_edit.setText(password)
     clipboard = QApplication.clipboard()
