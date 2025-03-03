@@ -1,10 +1,15 @@
 from pathlib import Path
+import string
 from PySide6.QtCore import QObject, Signal, QSettings
 
 
 BASE_PATH = Path(__file__).parent.parent  # 当前项目根目录
 CONFIG_PATH = BASE_PATH / 'config.yaml'  # 配置文件uri
 SPLASH_FILE = 'splash.png'
+
+# 密码可用字符集
+PWD_CHARACTORS = string.ascii_letters + string.digits + "!@#$%^&*"
+DELIMITER = '~'  # 填充密码使用字符
 
 
 class GlobalCache(QObject):

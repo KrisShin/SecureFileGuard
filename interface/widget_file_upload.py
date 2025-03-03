@@ -1,3 +1,4 @@
+from pathlib import Path
 from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
@@ -15,11 +16,12 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-from module.common import generate_strong_password
+from module.common import generate_strong_password, get_password_hash
 from module.custom_widget import PasswordToggleWidget
-from module.encrypt_apis import encrypt_file_AES
+from module.encrypt_apis import encrypt_file
 from setting.config_loader import config
-from setting.global_variant import gcache
+from setting.global_variant import DELIMITER, gcache
+from db_data.manager import db
 
 
 def setup_file_upload_ui(main_window: QMainWindow, content_widget: QWidget):
@@ -85,14 +87,17 @@ def _build_upload_form(main_window: QMainWindow, container: QWidget):
     container.algorithm_group = QButtonGroup(container)
     container.aes_radio = QRadioButton("AES")
     container.des_radio = QRadioButton("DES")
+    container.des3_radio = QRadioButton("3DES")
     container.sm4_radio = QRadioButton("SM4")
     container.aes_radio.setFixedHeight(35)
     container.des_radio.setFixedHeight(35)
+    container.des3_radio.setFixedHeight(35)
     container.sm4_radio.setFixedHeight(35)
 
     # 添加到组，保证单选
     container.algorithm_group.addButton(container.aes_radio)
     container.algorithm_group.addButton(container.des_radio)
+    container.algorithm_group.addButton(container.des3_radio)
     container.algorithm_group.addButton(container.sm4_radio)
 
     # 默认选中 config.security.default_algorithm
@@ -101,18 +106,19 @@ def _build_upload_form(main_window: QMainWindow, container: QWidget):
         container.aes_radio.setChecked(True)
     elif default_algorithm == "DES":
         container.des_radio.setChecked(True)
+    elif default_algorithm == "3DES":
+        container.des3_radio.setChecked(True)
     elif default_algorithm == "SM4":
         container.sm4_radio.setChecked(True)
 
     algorithm_layout = QHBoxLayout()
     algorithm_layout.addWidget(container.aes_radio)
     algorithm_layout.addWidget(container.des_radio)
+    algorithm_layout.addWidget(container.des3_radio)
     algorithm_layout.addWidget(container.sm4_radio)
 
     # 密码输入框
-    container.password = PasswordToggleWidget(
-        placeholder='输入加密密码', style='height:35px;border-radius: 12px; background: rgba(0, 0, 0, 0.2);'
-    )
+    container.password = PasswordToggleWidget(placeholder='输入加密密码', style='height:35px;border-radius: 12px; background: rgba(0, 0, 0, 0.2);')
     container.password.setFixedHeight(35)
 
     # 生成强密码按钮
@@ -190,7 +196,8 @@ def select_file(container_widget):
 
 def submit(container_widget: QWidget):
     selected_algorithm = get_selected_algorithm(container_widget)
-    password: str = container_widget.password.text()
+    filename: bytes = container_widget.file_name.text()
+    password: bytes = container_widget.password.text()
 
     if not container_widget.selected_file:
         print("请先选择文件！")
@@ -199,19 +206,18 @@ def submit(container_widget: QWidget):
         print("请输入加密密码！")
         return
 
-    match selected_algorithm:
-        case 'AES':
-            encrypt_file_AES(
-                container_widget.selected_file,
-                gcache.current_user['username'],
-                container_widget.file_name.text(),
-                password.rjust(32, '$').encode('utf-8'),
-            )
-        case 'DES':
-            pass
-        case 'SM4':
-            pass
-    QMessageBox.information(container_widget, "成功", f"上传文件{container_widget.file_name.text()}成功")
+    file_size = Path(container_widget.selected_file).stat().st_size
+
+    is_success, iv_or_title, file_path_or_message = encrypt_file(
+        selected_algorithm, container_widget.selected_file, gcache.current_user['username'], container_widget.file_name.text(), password
+    )
+    if is_success:
+        db.upload_file(
+            password, get_password_hash(password), iv_or_title, gcache.current_user['username'], file_path_or_message.as_posix(), selected_algorithm, file_size, filename
+        )
+        QMessageBox.information(container_widget, "成功", f"上传文件{container_widget.file_name.text()}, {selected_algorithm}加密成功")
+    else:
+        QMessageBox.warning(container_widget, iv_or_title, file_path_or_message)
 
 
 def get_selected_algorithm(container_widget):
@@ -219,6 +225,8 @@ def get_selected_algorithm(container_widget):
         return "AES"
     elif container_widget.des_radio.isChecked():
         return "DES"
+    elif container_widget.des3_radio.isChecked():
+        return "3DES"
     elif container_widget.sm4_radio.isChecked():
         return "SM4"
     return ""

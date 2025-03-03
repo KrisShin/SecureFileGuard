@@ -20,5 +20,5 @@ security:
 other:
   width: 900                    # 窗口宽度
   height: 600                   # 窗口高度
-  splash_timeout: 800           # 欢迎屏幕持续时间
+  splash_timeout: 100           # 欢迎屏幕持续时间
   default_admin_password: '123qwe' # 默认管理员密码

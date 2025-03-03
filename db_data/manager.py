@@ -5,6 +5,7 @@ import sqlite3
 from typing import List, Dict
 from setting.config_loader import config
 from module.common import get_password_hash
+from setting.global_variant import gcache
 
 
 class DBManager(object):
@@ -117,6 +118,19 @@ class DBManager(object):
             except sqlite3.IntegrityError:
                 return False
 
+    def edit_file(self, password, password_hash, iv, algorithm, file_name) -> bool:
+        with self._get_connection() as conn:
+            try:
+                conn.execute(
+                    '''INSERT INTO sfg_encrypted_file (password, password_hash, iv, algorithm, file_name) VALUES (?, ?, ?, ?, ?)''',
+                    (password, password_hash, iv, algorithm, file_name),
+                )
+                conn.commit()
+                print(f"更新文件 {file_name} 成功")
+                return True
+            except sqlite3.IntegrityError:
+                return False
+
     # 查找单个文件
     def get_file_by_id(self, file_id: int) -> dict | None:
         with self._get_connection() as conn:
@@ -128,18 +142,19 @@ class DBManager(object):
                 return False
 
     # 文件查询（带分页）
-    def get_user_files(self, username: str, page: int = 1, per_page: int = 20) -> List[Dict]:
-        offset = (page - 1) * per_page
+    def get_user_files(self, username: str, params: dict = {}) -> List[Dict]:
         with self._get_connection() as conn:
-            cursor = conn.execute(
-                '''
-                SELECT * FROM sfg_encrypted_file
-                WHERE user_id = ?
-                ORDER BY created_at DESC
-                LIMIT ? OFFSET ?
-            ''',
-                (username, per_page, offset),
-            )
+            if username == 'admin' or gcache.current_user['role'] == 'admin':
+                where_str_list = []
+                values = []
+            else:
+                where_str_list = ['user_name = ?']
+                values = [username]
+            if params:
+                for k, v in params.items():
+                    where_str_list.append(f'{k}=?')
+                    values.append(v)
+            cursor = conn.execute(f'''SELECT * FROM sfg_encrypted_file {'WHERE' if where_str_list else ''} {' and '.join(where_str_list)} ORDER BY created_at DESC''', values)
             return [dict(row) for row in cursor]
 
 

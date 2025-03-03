@@ -18,7 +18,7 @@ class MainWindow(QMainWindow):
         self.resize(config.other.width, config.other.height)
         self.user = gcache.current_user
         self.init_ui()
-        self.open_file_upload()
+        self.open_file_edit()
 
     def init_ui(self):
         # 创建主布局容器

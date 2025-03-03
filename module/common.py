@@ -4,6 +4,8 @@ from passlib.context import CryptContext
 import random
 import string
 
+from setting.global_variant import PWD_CHARACTORS
+
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
@@ -24,9 +26,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def generate_strong_password():
     """生成符合安全规范的强密码"""
 
-    # 定义字符集
-    characters = string.ascii_letters + string.digits + "!@#$%^&*"
-
     # 生成12-16位密码
     length = random.randint(12, 16)
 
@@ -37,7 +36,7 @@ def generate_strong_password():
             random.choice(string.ascii_uppercase),
             random.choice(string.digits),
             random.choice("!@#$%^&*"),
-        ] + [random.choice(characters) for _ in range(length - 4)]
+        ] + [random.choice(PWD_CHARACTORS) for _ in range(length - 4)]
 
         random.shuffle(password)
         password = ''.join(password)
