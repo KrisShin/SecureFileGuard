@@ -120,7 +120,7 @@ def _build_edit_form(main_window: QMainWindow, container: QWidget):
     algorithm = config.security.default_algorithm
     if main_window.current_file:
         container.file_path.setText(main_window.current_file['file_path'])
-        container.file_name.setText(main_window.current_file['file_path'])
+        container.file_name.setText(main_window.current_file['file_name'])
         algorithm = main_window.current_file['algorithm']
 
     if algorithm == "AES":
@@ -139,7 +139,9 @@ def _build_edit_form(main_window: QMainWindow, container: QWidget):
     algorithm_layout.addWidget(container.sm4_radio)
 
     # 密码输入框
-    container.password = PasswordToggleWidget(placeholder='输入加密密码', style='height:35px;border-radius: 12px; background: rgba(0, 0, 0, 0.2);')
+    container.password = PasswordToggleWidget(
+        placeholder='输入加密密码', style='height:35px;border-radius: 12px; background: rgba(0, 0, 0, 0.2);'
+    )
     container.password.setFixedHeight(35)
 
     # 生成强密码按钮
@@ -189,7 +191,7 @@ def _build_edit_form(main_window: QMainWindow, container: QWidget):
     container.btn_submit.clicked.connect(lambda: submit(main_window, container))
 
     label_hint = QLabel("* 选择文件之后请先输入密码解锁之后才能编辑!")
-    label_hint.setStyleSheet("color: red; font-size: 14px")
+    label_hint.setStyleSheet("color: red; font-size: 14px; background: transparent")
     # 布局管理
     form_layout = QFormLayout()
     form_layout.addRow("", label_hint)
@@ -276,27 +278,29 @@ def select_file(container_widget: QWidget):
 def submit(main_window: QMainWindow, container_widget: QWidget):
     selected_algorithm = get_selected_algorithm(container_widget)
     password: str = container_widget.password.text()
-    filename: bytes = container_widget.file_name.text()
+    filename: str = container_widget.file_name.text()
 
     if not password:
         print("请输入加密密码！")
         return
 
     org_file = db.get_file_by_id(main_window.current_file['id'])
-    decrypt_text, filled_password = decrypt_file(org_file['algorithm'], password, org_file['id'])
+    decrypt_text, _ = decrypt_file(org_file['algorithm'], password, org_file['id'])
 
-    is_success, iv_or_title, file_path_or_message = encrypt_file(
+    is_success, iv_or_title, file_path_or_message, filled_password = encrypt_file(
         selected_algorithm,
-        container_widget.selected_file,
+        None,
         gcache.current_user['username'],
-        container_widget.file_name.text(),
+        filename,
         password,
         plaintext=decrypt_text,
         file_path=org_file['file_path'],
     )
     if is_success:
-        db.edit_file(filled_password, get_password_hash(filled_password), iv_or_title, selected_algorithm, filename)
-        QMessageBox.information(container_widget, "成功", f"更新文件{container_widget.file_name.text()}-{selected_algorithm}加密成功")
+        db.edit_file(main_window.current_file['id'], filled_password, get_password_hash(filled_password), iv_or_title, selected_algorithm, filename)
+        QMessageBox.information(
+            container_widget, "成功", f"更新文件{filename}-{selected_algorithm}加密成功"
+        )
     else:
         QMessageBox.warning(container_widget, iv_or_title, file_path_or_message)
 

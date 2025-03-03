@@ -189,20 +189,32 @@ def encrypt_file(algorithm: str, input_file, username, file_name, password, plai
         case 'AES':
             if len(password) > 32:
                 return False, "错误", "AES加密, 密码不能超过32位"
-            iv, fpath = encrypt_file_AES(input_file, username, file_name, password.rjust(32, DELIMITER).encode('utf-8'), plaintext=plaintext, file_path=file_path)
+            filled_password = password.rjust(32, DELIMITER)
+            iv, fpath = encrypt_file_AES(
+                input_file, username, file_name, filled_password.encode('utf-8'), plaintext=plaintext, file_path=file_path
+            )
         case 'DES':
             if len(password) > 8:
                 return False, "错误", "DES加密, 密码不能超过8位"
-            iv, fpath = encrypt_file_AES(input_file, username, file_name, password.rjust(8, DELIMITER).encode('utf-8'), plaintext=plaintext, file_path=file_path)
+            filled_password = password.rjust(8, DELIMITER)
+            iv, fpath = encrypt_file_DES(
+                input_file, username, file_name, filled_password.encode('utf-8'), plaintext=plaintext, file_path=file_path
+            )
         case '3DES':
             if len(password) > 8:
                 return False, "错误", "3DES加密, 密码不能超过8位"
-            iv, fpath = encrypt_file_AES(input_file, username, file_name, password.rjust(8, DELIMITER).encode('utf-8'), plaintext=plaintext, file_path=file_path)
+            filled_password = password.rjust(8, DELIMITER)
+            iv, fpath = encrypt_file_3DES(
+                input_file, username, file_name, filled_password.encode('utf-8'), plaintext=plaintext, file_path=file_path
+            )
         case 'SM4':
             if len(password) > 16:
                 return False, "错误", "SM4加密, 密码不能超过16位"
-            iv, fpath = encrypt_file_AES(input_file, username, file_name, password.rjust(16, DELIMITER).encode('utf-8'), plaintext=plaintext, file_path=file_path)
-    return iv, fpath
+            filled_password = password.rjust(16, DELIMITER)
+            iv, fpath = encrypt_file_SM4(
+                input_file, username, file_name, filled_password.encode('utf-8'), plaintext=plaintext, file_path=file_path
+            )
+    return True, iv, fpath, filled_password
 
 
 def decrypt_file(algorithm: str, password: str, file_id: int):

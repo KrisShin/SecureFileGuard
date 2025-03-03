@@ -196,8 +196,8 @@ def select_file(container_widget):
 
 def submit(container_widget: QWidget):
     selected_algorithm = get_selected_algorithm(container_widget)
-    filename: bytes = container_widget.file_name.text()
-    password: bytes = container_widget.password.text()
+    filename: str = container_widget.file_name.text()
+    password: str = container_widget.password.text()
 
     if not container_widget.selected_file:
         print("请先选择文件！")
@@ -208,14 +208,14 @@ def submit(container_widget: QWidget):
 
     file_size = Path(container_widget.selected_file).stat().st_size
 
-    is_success, iv_or_title, file_path_or_message = encrypt_file(
-        selected_algorithm, container_widget.selected_file, gcache.current_user['username'], container_widget.file_name.text(), password
+    is_success, iv_or_title, file_path_or_message, filled_password = encrypt_file(
+        selected_algorithm, container_widget.selected_file, gcache.current_user['username'], filename, password
     )
     if is_success:
         db.upload_file(
-            password, get_password_hash(password), iv_or_title, gcache.current_user['username'], file_path_or_message.as_posix(), selected_algorithm, file_size, filename
+            filled_password, get_password_hash(filled_password), iv_or_title, gcache.current_user['username'], file_path_or_message.as_posix(), selected_algorithm, file_size, filename
         )
-        QMessageBox.information(container_widget, "成功", f"上传文件{container_widget.file_name.text()}, {selected_algorithm}加密成功")
+        QMessageBox.information(container_widget, "成功", f"上传文件{filename}, {selected_algorithm}加密成功")
     else:
         QMessageBox.warning(container_widget, iv_or_title, file_path_or_message)
 

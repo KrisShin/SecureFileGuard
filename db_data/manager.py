@@ -118,12 +118,12 @@ class DBManager(object):
             except sqlite3.IntegrityError:
                 return False
 
-    def edit_file(self, password, password_hash, iv, algorithm, file_name) -> bool:
+    def edit_file(self, file_id, password, password_hash, iv, algorithm, file_name) -> bool:
         with self._get_connection() as conn:
             try:
                 conn.execute(
-                    '''INSERT INTO sfg_encrypted_file (password, password_hash, iv, algorithm, file_name) VALUES (?, ?, ?, ?, ?)''',
-                    (password, password_hash, iv, algorithm, file_name),
+                    f'''update sfg_encrypted_file set  password=?, password_hash=?, iv=?, algorithm=?, file_name=? where id=?''',
+                    (password, password_hash, iv, algorithm, file_name, file_id),
                 )
                 conn.commit()
                 print(f"更新文件 {file_name} 成功")
@@ -154,7 +154,10 @@ class DBManager(object):
                 for k, v in params.items():
                     where_str_list.append(f'{k}=?')
                     values.append(v)
-            cursor = conn.execute(f'''SELECT * FROM sfg_encrypted_file {'WHERE' if where_str_list else ''} {' and '.join(where_str_list)} ORDER BY created_at DESC''', values)
+            cursor = conn.execute(
+                f'''SELECT * FROM sfg_encrypted_file {'WHERE' if where_str_list else ''} {' and '.join(where_str_list)} ORDER BY created_at DESC''',
+                values,
+            )
             return [dict(row) for row in cursor]
 
 
