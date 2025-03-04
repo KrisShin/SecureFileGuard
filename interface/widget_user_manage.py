@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 
 from module.common import generate_strong_password
-from module.custom_widget import PasswordToggleWidget
+from interface.custom_widget import PasswordToggleWidget
 from module.user_apis import change_password
 from setting.global_variant import gcache
 

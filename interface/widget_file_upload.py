@@ -17,8 +17,9 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 
 from module.common import generate_strong_password, get_password_hash
-from module.custom_widget import PasswordToggleWidget
+from interface.custom_widget import PasswordToggleWidget
 from module.encrypt_apis import encrypt_file
+from module.file_apis import file_upload
 from setting.config_loader import config
 from setting.global_variant import DELIMITER, gcache
 from db_data.manager import db
@@ -199,25 +200,11 @@ def submit(container_widget: QWidget):
     filename: str = container_widget.file_name.text()
     password: str = container_widget.password.text()
 
-    if not container_widget.selected_file:
-        print("请先选择文件！")
-        return
-    if not password:
-        print("请输入加密密码！")
-        return
-
-    file_size = Path(container_widget.selected_file).stat().st_size
-
-    is_success, iv_or_title, file_path_or_message, filled_password = encrypt_file(
-        selected_algorithm, container_widget.selected_file, gcache.current_user['username'], filename, password
-    )
+    is_success, title, message = file_upload(selected_algorithm, filename, password, container_widget.select_file, gcache.current_user['username'])
     if is_success:
-        db.upload_file(
-            filled_password, get_password_hash(filled_password), iv_or_title, gcache.current_user['username'], file_path_or_message.as_posix(), selected_algorithm, file_size, filename
-        )
-        QMessageBox.information(container_widget, "成功", f"上传文件{filename}, {selected_algorithm}加密成功")
+        QMessageBox.information(container_widget, title, title, message)
     else:
-        QMessageBox.warning(container_widget, iv_or_title, file_path_or_message)
+        QMessageBox.warning(container_widget, title, message)
 
 
 def get_selected_algorithm(container_widget):

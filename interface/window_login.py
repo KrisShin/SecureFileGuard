@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Signal, Qt, QTimer
 from PySide6.QtGui import QPixmap
 
-from module.custom_widget import PasswordToggleWidget
+from interface.custom_widget import PasswordToggleWidget
 from module.user_apis import login, register
 from setting.config_loader import config
 from interface.window_main import MainWindow
