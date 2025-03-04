@@ -39,7 +39,7 @@ def file_edit(password: str, file_id: int, selected_algorithm: str, username: st
         return False, "请输入加密密码！"
 
     org_file = db.get_file_by_id(file_id)
-    decrypt_text, _ = decrypt_file(org_file['algorithm'], password, file_id)
+    decrypt_text, _ = decrypt_file(org_file['algorithm'], org_file['password'], file_id)
 
     is_success, iv_or_title, file_path_or_message, filled_password = encrypt_file(
         selected_algorithm,
