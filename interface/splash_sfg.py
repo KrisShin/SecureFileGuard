@@ -1,7 +1,8 @@
 from pathlib import Path
-from PySide6.QtCore import Qt, QTimer, QRect, QSize
-from PySide6.QtGui import QPixmap, QPainter, QColor, QFont, QFontDatabase, QResizeEvent
-from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsPixmapItem, QGraphicsBlurEffect, QGraphicsView
+
+from PySide6.QtCore import QRect, QSize, Qt
+from PySide6.QtGui import QColor, QFont, QPainter, QPixmap, QResizeEvent
+from PySide6.QtWidgets import QGraphicsBlurEffect, QGraphicsPixmapItem, QGraphicsScene, QWidget
 
 from setting.config_loader import config
 from setting.global_variant import SPLASH_FILE

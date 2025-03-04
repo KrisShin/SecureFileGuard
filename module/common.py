@@ -1,11 +1,13 @@
 import os
-from pathlib import Path
-from passlib.context import CryptContext
 import random
 import string
+from pathlib import Path
 
+from passlib.context import CryptContext
+from PySide6.QtWidgets import QApplication, QWidget
+
+from interface.custom_widget import MyQLabelTip
 from setting.global_variant import PWD_CHARACTORS
-
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
@@ -42,12 +44,7 @@ def generate_strong_password():
         password = ''.join(password)
 
         # 验证密码强度
-        if (
-            any(c.islower() for c in password)
-            and any(c.isupper() for c in password)
-            and any(c.isdigit() for c in password)
-            and any(c in "!@#$%^&*" for c in password)
-        ):
+        if any(c.islower() for c in password) and any(c.isupper() for c in password) and any(c.isdigit() for c in password) and any(c in "!@#$%^&*" for c in password):
             break
     return password
 
@@ -58,3 +55,11 @@ def create_dir_if_not_exists(file_path: Path):
         file_path = Path(file_path)
     if not os.path.exists(file_path.parent):
         os.makedirs(file_path.parent)
+
+
+def handle_set_strong_password(container: QWidget, password_line: QWidget):
+    password = generate_strong_password()
+    password_line.setText(password)
+    clipboard = QApplication.clipboard()
+    clipboard.setText(password)
+    MyQLabelTip("密码已生成并复制到剪贴板", container)

@@ -1,28 +1,11 @@
-from pathlib import Path
-from PySide6.QtWidgets import (
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QFileDialog,
-    QRadioButton,
-    QButtonGroup,
-    QFormLayout,
-    QMainWindow,
-    QWidget,
-    QApplication,
-    QMessageBox,
-)
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QButtonGroup, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QPushButton, QRadioButton, QVBoxLayout, QWidget
 
-from module.common import generate_strong_password, get_password_hash
-from interface.custom_widget import PasswordToggleWidget
-from module.encrypt_apis import encrypt_file
+from interface.custom_widget import MyQLabelTip, PasswordToggleWidget
+from module.common import handle_set_strong_password
 from module.file_apis import file_upload
 from setting.config_loader import config
-from setting.global_variant import DELIMITER, gcache
-from db_data.manager import db
+from setting.global_variant import gcache
 
 
 def setup_file_upload_ui(main_window: QMainWindow, content_widget: QWidget):
@@ -137,7 +120,7 @@ def _build_upload_form(main_window: QMainWindow, container: QWidget):
         """
     )
 
-    generate_btn.clicked.connect(lambda: (handle_set_strong_password(container)))
+    generate_btn.clicked.connect(lambda: (handle_set_strong_password(container, container.password)))
     # 提交按钮
     container.btn_submit = QPushButton("提交")
     container.btn_submit.setFixedSize(150, 40)
@@ -178,14 +161,6 @@ def _build_upload_form(main_window: QMainWindow, container: QWidget):
     container.layout().addStretch(1)
 
 
-def handle_set_strong_password(container: QWidget):
-    password = generate_strong_password()
-    container.password.setText(password)
-    clipboard = QApplication.clipboard()
-    clipboard.setText(password)
-    QMessageBox.information(container, '提示', "密码已生成并复制到剪贴板")
-
-
 def select_file(container_widget):
     file_dialog = QFileDialog(container_widget)
     file_path, _ = file_dialog.getOpenFileName(container_widget, "选择文件", "", "所有文件 (*.*)")
@@ -195,16 +170,13 @@ def select_file(container_widget):
         container_widget.file_name.setText(file_path.split("/")[-1])
 
 
-def submit(container_widget: QWidget):
-    selected_algorithm = get_selected_algorithm(container_widget)
-    filename: str = container_widget.file_name.text()
-    password: str = container_widget.password.text()
+def submit(container: QWidget):
+    selected_algorithm = get_selected_algorithm(container)
+    filename: str = container.file_name.text()
+    password: str = container.password.text()
 
-    is_success, title, message = file_upload(selected_algorithm, filename, password, container_widget.select_file, gcache.current_user['username'])
-    if is_success:
-        QMessageBox.information(container_widget, title, title, message)
-    else:
-        QMessageBox.warning(container_widget, title, message)
+    is_success, message = file_upload(selected_algorithm, filename, password, container.selected_file, gcache.current_user['username'])
+    MyQLabelTip(message, container, is_success)
 
 
 def get_selected_algorithm(container_widget):

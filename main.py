@@ -1,11 +1,12 @@
 import sys
+
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 
+from db_data.manager import db  # 初始化数据库
 from interface.splash_sfg import SplashScreen
 from interface.window_login import LoginWindow
 from setting.config_loader import config
-from db_data.manager import db  # 初始化数据库
 
 if __name__ == "__main__":
     db.init_amdin_user()

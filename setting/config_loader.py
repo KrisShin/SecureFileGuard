@@ -1,6 +1,7 @@
-import yaml
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
+import yaml
 
 from setting.global_variant import CONFIG_PATH
 
@@ -58,9 +59,7 @@ class ConfigLoader(object):
         """配置基础验证"""
         # 验证加密算法配置
         if config.security.default_algorithm not in config.security.algorithms:
-            raise ValueError(
-                f"默认算法 {config.security.default_algorithm} " f"不在支持的算法列表 {config.security.algorithms} 中"
-            )
+            raise ValueError(f"默认算法 {config.security.default_algorithm} " f"不在支持的算法列表 {config.security.algorithms} 中")
 
         # 验证路径配置
         required_paths = ['db_file', 'upload', 'download']

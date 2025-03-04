@@ -1,4 +1,7 @@
-from PySide6.QtWidgets import QWidget, QLineEdit, QToolButton, QHBoxLayout
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QToolButton, QWidget
+
+from setting.global_variant import DANGER_RGB, SUCCESS_RGB
 
 
 class PasswordToggleWidget(QWidget):
@@ -41,3 +44,29 @@ class PasswordToggleWidget(QWidget):
     def text(self) -> str:
         """获取密码"""
         return self.password.text()
+
+
+class MyQLabelTip(QWidget):
+    def __init__(self, text: str, container: QWidget, is_success: bool = True):
+        super().__init__(container)
+
+        bg_color = SUCCESS_RGB if is_success else DANGER_RGB
+
+        # 创建半透明浮动标签
+        tip_label = QLabel(text, container)
+        tip_label.setStyleSheet(
+            f"""
+            QLabel {{ 
+                background: rgba({bg_color}, 0.7); 
+                color: white; 
+                padding: 8px; 
+                border-radius: 4px;
+            }}
+        """
+        )
+        tip_label.setFixedWidth(20 + len(text) * 12)
+        tip_label.move(20, 20)  # 调整显示位置
+        tip_label.show()
+
+        # 设置2秒后自动隐藏
+        QTimer.singleShot(2000, tip_label.close)

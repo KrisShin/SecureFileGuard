@@ -1,28 +1,11 @@
-from PySide6.QtWidgets import (
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QFileDialog,
-    QRadioButton,
-    QButtonGroup,
-    QFormLayout,
-    QMainWindow,
-    QWidget,
-    QApplication,
-    QMessageBox,
-    QComboBox,
-)
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QButtonGroup, QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QPushButton, QRadioButton, QVBoxLayout, QWidget
 
-from module.common import generate_strong_password, get_password_hash, verify_password
-from interface.custom_widget import PasswordToggleWidget
-from module.encrypt_apis import decrypt_file, encrypt_file
-from module.file_apis import file_edit
-from setting.global_variant import DELIMITER, gcache
+from interface.custom_widget import MyQLabelTip, PasswordToggleWidget
+from module.common import handle_set_strong_password
+from module.file_apis import file_edit, get_file_list, varify_file_password
 from setting.config_loader import config
-from db_data.manager import db
+from setting.global_variant import gcache
 
 
 def setup_file_edit_ui(main_window: QMainWindow, content_widget: QWidget):
@@ -74,7 +57,7 @@ def _build_edit_form(main_window: QMainWindow, container: QWidget):
     container.file_selector.setStyleSheet("height:35px;border-radius: 12px; background: rgba(0, 0, 0, 0.6);")
 
     # 从数据库获取文件列表并填充
-    main_window.file_list = db.get_user_files(gcache.current_user['username'])
+    main_window.file_list = get_file_list(gcache.current_user)
     container.file_selector.addItems([f"{f['file_name']}-{f['algorithm']}" for f in main_window.file_list])
     main_window.current_file = main_window.file_list[0] if main_window.file_list else None
     main_window.unlock = False
@@ -172,7 +155,7 @@ def _build_edit_form(main_window: QMainWindow, container: QWidget):
         """
     )
 
-    container.generate_btn.clicked.connect(lambda: (handle_set_strong_password(container)))
+    container.generate_btn.clicked.connect(lambda: (handle_set_strong_password(container, container.password)))
     # 提交按钮
     container.btn_submit = QPushButton("提交")
     container.btn_submit.setFixedSize(150, 40)
@@ -255,60 +238,32 @@ def set_widget_unlock(main_window: QMainWindow, container: QWidget, unlock: bool
         main_window.unlock = unlock
 
 
-def handle_set_strong_password(container: QWidget):
-    password = generate_strong_password()
-    container.password.setText(password)
-    clipboard = QApplication.clipboard()
-    clipboard.setText(password)
-    QMessageBox.information(container, '提示', "密码已生成并复制到剪贴板")
-
-
-def select_file(container_widget: QWidget):
-    file_dialog = QFileDialog(container_widget)
-    file_path, _ = file_dialog.getOpenFileName(container_widget, "选择文件", "", "所有文件 (*.*)")
+def select_file(container: QWidget):
+    file_dialog = QFileDialog(container)
+    file_path, _ = file_dialog.getOpenFileName(container, "选择文件", "", "所有文件 (*.*)")
     if file_path:
-        container_widget.selected_file = file_path
-        container_widget.file_path.setText(file_path)
-        container_widget.file_name.setText(file_path.split("/")[-1])
+        container.selected_file = file_path
+        container.file_path.setText(file_path)
+        container.file_name.setText(file_path.split("/")[-1])
 
 
-def submit(main_window: QMainWindow, container_widget: QWidget):
-    selected_algorithm = get_selected_algorithm(container_widget)
-    password: str = container_widget.password.text()
-    filename: str = container_widget.file_name.text()
+def submit(main_window: QMainWindow, container: QWidget):
+    selected_algorithm = get_selected_algorithm(container)
+    password: str = container.password.text()
+    filename: str = container.file_name.text()
 
-    is_success, iv_or_title, file_path_or_message = file_edit(password, main_window.current_file['id'], selected_algorithm, gcache.current_user['username'], filename)
-    if is_success:
-        QMessageBox.information(container_widget, iv_or_title, file_path_or_message)
-    else:
-        QMessageBox.warning(container_widget, iv_or_title, file_path_or_message)
+    is_success, file_path_or_message = file_edit(password, main_window.current_file['id'], selected_algorithm, gcache.current_user['username'], filename)
+    MyQLabelTip(file_path_or_message, container, is_success)
 
 
 def unlock_file(main_window: QMainWindow, container: QWidget):
     file = main_window.current_file
     password: str = container.password.text()
 
-    if not file:
-        print("请先选择文件！")
-        return
-    if not password:
-        print("请输入加密密码！")
-        return
-
-    match file['algorithm']:
-        case 'AES':
-            filled_password = password.rjust(32, DELIMITER)
-        case 'DES':
-            filled_password = password.rjust(8, DELIMITER)
-        case '3DES':
-            filled_password = password.rjust(8, DELIMITER)
-        case 'SM4':
-            filled_password = password.rjust(16, DELIMITER)
-    if verify_password(filled_password, file['password_hash']):
-        QMessageBox.information(container, "成功", f"解密成功")
+    is_success, message = varify_file_password(file, password)
+    if is_success:
         set_widget_unlock(main_window, container, True)
-    else:
-        QMessageBox.warning(container, "错误", f"密码错误")
+    MyQLabelTip(message, container, is_success)
 
 
 def get_selected_algorithm(container_widget):

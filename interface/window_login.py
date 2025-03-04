@@ -1,22 +1,13 @@
 from pathlib import Path
-from PySide6.QtWidgets import (
-    QApplication,
-    QWidget,
-    QLineEdit,
-    QPushButton,
-    QVBoxLayout,
-    QMessageBox,
-    QLabel,
-    QHBoxLayout,
-    QFormLayout,
-)
-from PySide6.QtCore import Signal, Qt, QTimer
-from PySide6.QtGui import QPixmap
 
-from interface.custom_widget import PasswordToggleWidget
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QApplication, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QWidget
+
+from interface.custom_widget import MyQLabelTip, PasswordToggleWidget
+from interface.window_main import MainWindow
 from module.user_apis import login, register
 from setting.config_loader import config
-from interface.window_main import MainWindow
 
 
 class LoginWindow(QWidget):
@@ -47,17 +38,18 @@ class LoginWindow(QWidget):
         password = self.password_widget.text()
 
         if not all((username, password)):
-            QMessageBox.warning(self, "错误", "请输入用户名和密码")
+            MyQLabelTip("请输入用户名和密码", self, False)
             return
-        is_success, (title, message) = login(username, password)
+        is_success, message = login(username, password)
         if not is_success:
-            QMessageBox.warning(self, title, message)
+            MyQLabelTip(message, self, is_success)
             return
         else:
             self.main_window = MainWindow()
             self.login_success.emit()
             self.show_main()
             QTimer.singleShot(200, self.close)
+            MyQLabelTip(f"欢迎{username}登录成功!", self)
 
     def show_main(self):
         self.main_window.destroyed.connect(QApplication.quit)
@@ -200,7 +192,7 @@ class LoginWindow(QWidget):
             'email': self.email.text().strip() or None,
         }
 
-        is_success, (title, message) = register(regist_data)
+        is_success, message = register(regist_data)
         if is_success:
             # 创建自定义消息框
             msg_box = QMessageBox(self)
@@ -214,4 +206,4 @@ class LoginWindow(QWidget):
 
             msg_box.exec()
         else:
-            QMessageBox.warning(self, title, message)
+            MyQLabelTip(message, self, is_success)

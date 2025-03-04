@@ -1,13 +1,14 @@
-from pathlib import Path
-import time
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
-from Crypto.Cipher import DES
 import os
+import time
+from pathlib import Path
 
+from Crypto.Cipher import DES
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+from db_data.manager import db
 from module.common import create_dir_if_not_exists
 from setting.config_loader import config
-from db_data.manager import db
 from setting.global_variant import DELIMITER
 
 
@@ -190,30 +191,22 @@ def encrypt_file(algorithm: str, input_file, username, file_name, password, plai
             if len(password) > 32:
                 return False, "错误", "AES加密, 密码不能超过32位"
             filled_password = password.rjust(32, DELIMITER)
-            iv, fpath = encrypt_file_AES(
-                input_file, username, file_name, filled_password.encode('utf-8'), plaintext=plaintext, file_path=file_path
-            )
+            iv, fpath = encrypt_file_AES(input_file, username, file_name, filled_password.encode('utf-8'), plaintext=plaintext, file_path=file_path)
         case 'DES':
             if len(password) > 8:
                 return False, "错误", "DES加密, 密码不能超过8位"
             filled_password = password.rjust(8, DELIMITER)
-            iv, fpath = encrypt_file_DES(
-                input_file, username, file_name, filled_password.encode('utf-8'), plaintext=plaintext, file_path=file_path
-            )
+            iv, fpath = encrypt_file_DES(input_file, username, file_name, filled_password.encode('utf-8'), plaintext=plaintext, file_path=file_path)
         case '3DES':
             if len(password) > 8:
                 return False, "错误", "3DES加密, 密码不能超过8位"
             filled_password = password.rjust(8, DELIMITER)
-            iv, fpath = encrypt_file_3DES(
-                input_file, username, file_name, filled_password.encode('utf-8'), plaintext=plaintext, file_path=file_path
-            )
+            iv, fpath = encrypt_file_3DES(input_file, username, file_name, filled_password.encode('utf-8'), plaintext=plaintext, file_path=file_path)
         case 'SM4':
             if len(password) > 16:
                 return False, "错误", "SM4加密, 密码不能超过16位"
             filled_password = password.rjust(16, DELIMITER)
-            iv, fpath = encrypt_file_SM4(
-                input_file, username, file_name, filled_password.encode('utf-8'), plaintext=plaintext, file_path=file_path
-            )
+            iv, fpath = encrypt_file_SM4(input_file, username, file_name, filled_password.encode('utf-8'), plaintext=plaintext, file_path=file_path)
     return True, iv, fpath, filled_password
 
 

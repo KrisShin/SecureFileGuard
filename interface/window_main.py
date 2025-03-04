@@ -1,11 +1,13 @@
 from pathlib import Path
-from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel
+
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 from interface.widget_edit_password import set_change_password_ui
 from interface.widget_edit_profile import set_edit_profile_ui
 from interface.widget_file_edit import setup_file_edit_ui
+from interface.widget_file_list import set_file_list_ui
 from interface.widget_file_upload import setup_file_upload_ui
 from interface.widget_user_manage import set_user_manage_ui
 from setting.config_loader import config
@@ -19,7 +21,7 @@ class MainWindow(QMainWindow):
         self.resize(config.other.width, config.other.height)
         self.user = gcache.current_user
         self.init_ui()
-        self.open_file_edit()
+        self.open_file_manager()
 
     def init_ui(self):
         # 创建主布局容器
@@ -121,8 +123,7 @@ class MainWindow(QMainWindow):
 
     # 以下为功能方法示例 ---------------------------------
     def open_file_manager(self):
-        print("打开文件管理")
-        # 清空右侧区域并加载对应内容
+        set_file_list_ui(self, self.content_widget)
 
     def open_file_upload(self):
         setup_file_upload_ui(self, self.content_widget)

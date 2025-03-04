@@ -1,16 +1,7 @@
-from PySide6.QtWidgets import (
-    QWidget,
-    QHBoxLayout,
-    QMainWindow,
-    QVBoxLayout,
-    QFormLayout,
-    QLineEdit,
-    QPushButton,
-    QMessageBox,
-    QLabel,
-)
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox, QPushButton, QVBoxLayout, QWidget
 
+from interface.custom_widget import MyQLabelTip
 from module.user_apis import edit_profile
 from setting.global_variant import gcache
 
@@ -106,7 +97,7 @@ def _build_profile_form(main_window: QMainWindow, container: QWidget):
         QPushButton:hover { background: #66b1ff; }
     """
     )
-    submit_btn.clicked.connect(lambda: handle_edit_profile(main_window))
+    submit_btn.clicked.connect(lambda: handle_edit_profile(main_window, container))
 
     # 布局组装
     btn_container.layout().addStretch(1)
@@ -121,7 +112,7 @@ def _build_profile_form(main_window: QMainWindow, container: QWidget):
     container.layout().addStretch(1)
 
 
-def handle_edit_profile(main_window: QMainWindow):
+def handle_edit_profile(main_window: QMainWindow, container: QWidget):
     """处理编辑信息提交"""
     new_phone = main_window.new_phone_edit.text().strip()
     new_email = main_window.new_email_edit.text().strip()
@@ -135,10 +126,7 @@ def handle_edit_profile(main_window: QMainWindow):
         if new_email and new_email != gcache.current_user['email']:
             params['email'] = new_email
         if params:
-            is_success, (title, message) = edit_profile(gcache.current_user['username'], params)
-            if is_success:
-                QMessageBox.information(main_window, "成功", "修改成功")
-            else:
-                QMessageBox.warning(main_window, title, message)
+            is_success, message = edit_profile(gcache.current_user['username'], params)
+            MyQLabelTip(message, container, is_success)
     except Exception as e:
         QMessageBox.critical(main_window, "操作失败", f"更新过程中发生错误：{str(e)}")

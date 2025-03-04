@@ -1,18 +1,8 @@
-from PySide6.QtWidgets import (
-    QWidget,
-    QHBoxLayout,
-    QMainWindow,
-    QVBoxLayout,
-    QFormLayout,
-    QPushButton,
-    QMessageBox,
-    QLabel,
-    QApplication,
-)
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QMainWindow, QMessageBox, QPushButton, QVBoxLayout, QWidget
 
-from module.common import generate_strong_password
-from interface.custom_widget import PasswordToggleWidget
+from interface.custom_widget import MyQLabelTip, PasswordToggleWidget
+from module.common import handle_set_strong_password
 from module.user_apis import change_password
 from setting.global_variant import gcache
 
@@ -104,7 +94,7 @@ def _build_password_form(main_window: QMainWindow, container: QWidget):
         """
     )
 
-    generate_btn.clicked.connect(lambda: (handle_set_strong_password(main_window)))
+    generate_btn.clicked.connect(lambda: (handle_set_strong_password(container, main_window.new_password_edit)))
 
     submit_btn = QPushButton("提交修改")
     submit_btn.setFixedSize(150, 40)
@@ -119,7 +109,7 @@ def _build_password_form(main_window: QMainWindow, container: QWidget):
         QPushButton:hover { background: #66b1ff; }
         """
     )
-    submit_btn.clicked.connect(lambda: handle_change_password(main_window))
+    submit_btn.clicked.connect(lambda: handle_change_password(main_window, container))
 
     # 布局调整
     btn_container.layout().addStretch(1)
@@ -135,29 +125,21 @@ def _build_password_form(main_window: QMainWindow, container: QWidget):
     container.layout().addStretch(1)
 
 
-def handle_set_strong_password(main_window: QMainWindow):
-    password = generate_strong_password()
-    main_window.new_password_edit.setText(password)
-    clipboard = QApplication.clipboard()
-    clipboard.setText(password)
-    QMessageBox.information(main_window, '提示', "密码已生成并复制到剪贴板")
-
-
-def handle_change_password(main_window: QMainWindow):
+def handle_change_password(main_window: QMainWindow, container: QWidget):
     """处理密码修改提交"""
     org_password = main_window.org_password_edit.text().strip()
     new_password = main_window.new_password_edit.text().strip()
     if not all((org_password, new_password)):
-        QMessageBox.warning(main_window, "错误", "原密码和新密码不能为空")
+        MyQLabelTip("原密码和新密码不能为空", container, False)
         return
 
     try:
         params = {'org_password': org_password, 'new_password': new_password}
-        is_success, (title, message) = change_password(gcache.current_user['username'], params)
+        is_success, message = change_password(gcache.current_user['username'], params)
         if is_success:
-            QMessageBox.information(main_window, "成功", "修改成功, 请重新登录")
+            MyQLabelTip("修改成功, 请重新登录", container)
             main_window.logout()
         else:
-            QMessageBox.warning(main_window, title, message)
+            MyQLabelTip(message, container, is_success)
     except Exception as e:
         QMessageBox.critical(main_window, "操作失败", f"更新过程中发生错误：{str(e)}")

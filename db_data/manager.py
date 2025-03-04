@@ -1,11 +1,10 @@
 # db/db_manager.py
-from sqlite3 import connect, Row
 from contextlib import contextmanager
-import sqlite3
-from typing import List, Dict
-from setting.config_loader import config
+from sqlite3 import IntegrityError, Row, connect
+from typing import Dict, List
+
 from module.common import get_password_hash
-from setting.global_variant import gcache
+from setting.config_loader import config
 
 
 class DBManager(object):
@@ -35,6 +34,8 @@ class DBManager(object):
             with self._get_connection() as conn:
                 conn.execute('''INSERT INTO sfg_user (username, password, role) VALUES (?, ?, ?)''', ('admin', password, 'admin'))
                 conn.commit()
+        # add test user
+        # self._add_test_user()
 
     def get_user(self, username) -> dict:
         """根据用户名查询用户信息"""
@@ -43,18 +44,25 @@ class DBManager(object):
             user_obj = cursor.fetchone()
             return user_obj and dict(user_obj)
 
-    def get_user_list(self, params: dict) -> List[dict]:
-        """根据用户名查询用户信息"""
+    def get_user_list(self, params: dict, query: str = '') -> List[dict]:
+        """查询用户信息列表"""
         with self._get_connection() as conn:
             sql_str = """SELECT * FROM sfg_user """
-            sql_values = None
+            sql_values = []
             if params:
                 sql_keys = []
-                sql_values = []
                 for key, value in params.items():
                     sql_keys.append(f'"{key}"=?')
                     sql_values.append(value)
                 sql_str += 'WHERE ' + ' and '.join(sql_keys)
+            if query:
+                if params:
+                    sql_str += f" AND "
+                else:
+                    sql_str += f" WHERE "
+                sql_str += f"username LIKE ? OR phone LIKE ? OR email LIKE ?"
+                sql_values.extend([f'%{query}%'] * 3)
+            sql_str += ' ORDER BY username'
             cursor = conn.execute(sql_str, sql_values)
             rows = cursor.fetchall()
             return rows and [dict(user_obj) for user_obj in rows]
@@ -71,7 +79,7 @@ class DBManager(object):
                 conn.commit()
                 print(f"用户{user_data['username']} 注册成功")
                 return True
-            except sqlite3.IntegrityError:
+            except IntegrityError:
                 return False
 
     def update_user_info(self, username: str, params: dict) -> Dict:
@@ -91,7 +99,7 @@ class DBManager(object):
                 conn.commit()
                 print(f"用户{username} 更新成功")
                 return True
-            except sqlite3.IntegrityError:
+            except IntegrityError:
                 return False
 
     def update_user_last_login(self, username: str):
@@ -101,8 +109,43 @@ class DBManager(object):
                 conn.commit()
                 print(f"用户{username} 登录成功")
                 return True
-            except sqlite3.IntegrityError:
+            except IntegrityError:
                 return False
+
+    def delete_user(self, username: str):
+        with self._get_connection() as conn:
+            try:
+                conn.execute('''DELETE FROM sfg_user WHERE username=? ''', (username,))
+                conn.commit()
+                print(f"用户{username} 删除成功")
+                return True
+            except IntegrityError:
+                return False
+
+    def _add_test_user(self):
+        """添加测试用户"""
+        import datetime
+        import random
+        import string
+
+        password = get_password_hash(config.other.default_admin_password)
+        with self._get_connection() as conn:
+            for index in range(100):
+                username = f'{index}__' + ''.join(random.choices(string.ascii_letters, k=random.randint(3, 20)))
+                phone = '1' + ''.join(random.choices(string.digits, k=10))
+                email = (
+                    ''.join(random.choices(string.ascii_letters, k=random.randint(5, 10)))
+                    + '@'
+                    + ''.join(random.choices(string.ascii_letters, k=random.randint(2, 8)))
+                    + '.'
+                    + ''.join(random.choices(string.ascii_letters, k=random.randint(2, 5)))
+                )
+                last_login = datetime.datetime(day=random.randint(1, 28), month=random.randint(1, 12), year=2025, hour=random.randint(0, 23), minute=random.randint(0, 59))
+                conn.execute(
+                    '''INSERT INTO sfg_user (username, password, role, phone, email, last_login) VALUES (?, ?, ?, ?, ?, ?)''',
+                    (username, password, 'user', phone, email, last_login),
+                )
+            conn.commit()
 
     # 上传文件
     def upload_file(self, password, password_hash, iv, username, file_path, algorithm, file_size, file_name) -> bool:
@@ -115,20 +158,20 @@ class DBManager(object):
                 conn.commit()
                 print(f"用户{username} 上传文件 {file_name} 成功")
                 return True
-            except sqlite3.IntegrityError:
+            except IntegrityError:
                 return False
 
     def edit_file(self, file_id, password, password_hash, iv, algorithm, file_name) -> bool:
         with self._get_connection() as conn:
             try:
                 conn.execute(
-                    f'''update sfg_encrypted_file set  password=?, password_hash=?, iv=?, algorithm=?, file_name=? where id=?''',
+                    f'''update sfg_encrypted_file set  password=?, password_hash=?, iv=?, algorithm=?, file_name=?, modified_at=CURRENT_TIMESTAMP where id=?''',
                     (password, password_hash, iv, algorithm, file_name, file_id),
                 )
                 conn.commit()
                 print(f"更新文件 {file_name} 成功")
                 return True
-            except sqlite3.IntegrityError:
+            except IntegrityError:
                 return False
 
     # 查找单个文件
@@ -138,27 +181,41 @@ class DBManager(object):
                 cursor = conn.execute('''SELECT * FROM sfg_encrypted_file WHERE id=?''', (file_id,))
                 file_obj = cursor.fetchone()
                 return file_obj and dict(file_obj)
-            except sqlite3.IntegrityError:
+            except IntegrityError:
                 return False
 
-    # 文件查询（带分页）
-    def get_user_files(self, username: str, params: dict = {}) -> List[Dict]:
+    # 文件查询
+    def get_file_list(self, params: dict = {}, query: str = '') -> List[Dict]:
         with self._get_connection() as conn:
-            if username == 'admin' or gcache.current_user['role'] == 'admin':
-                where_str_list = []
-                values = []
-            else:
-                where_str_list = ['user_name = ?']
-                values = [username]
+            sql_str = """SELECT * FROM sfg_encrypted_file """
+            sql_values = []
             if params:
-                for k, v in params.items():
-                    where_str_list.append(f'{k}=?')
-                    values.append(v)
-            cursor = conn.execute(
-                f'''SELECT * FROM sfg_encrypted_file {'WHERE' if where_str_list else ''} {' and '.join(where_str_list)} ORDER BY created_at DESC''',
-                values,
-            )
-            return [dict(row) for row in cursor]
+                sql_keys = []
+                for key, value in params.items():
+                    sql_keys.append(f'"{key}"=?')
+                    sql_values.append(value)
+                sql_str += 'WHERE ' + ' and '.join(sql_keys)
+            if query:
+                if params:
+                    sql_str += f" AND "
+                else:
+                    sql_str += f" WHERE "
+                sql_str += f"file_name LIKE ? OR user_name LIKE ? OR algorithm LIKE ?"
+                sql_values.extend([f'%{query}%'] * 2)
+            sql_str += ' ORDER BY file_name, algorithm '
+            cursor = conn.execute(sql_str, sql_values)
+            rows = cursor.fetchall()
+            return rows and [dict(file_obj) for file_obj in rows]
+
+    def delete_file(self, file_id: int):
+        with self._get_connection() as conn:
+            try:
+                conn.execute('''DELETE FROM sfg_encrypted_file WHERE id=? ''', (file_id,))
+                conn.commit()
+                print(f"文件删除成功")
+                return True
+            except IntegrityError:
+                return False
 
 
 # 建表语句示例
@@ -169,8 +226,8 @@ CREATE TABLE IF NOT EXISTS sfg_user (
     role TEXT CHECK(role IN ('user', 'admin')) DEFAULT 'user',  -- 用户角色
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_login DATETIME,                       -- 最后登录时间
-    phone VARCHAR(20) UNIQUE,                  -- 唯一手机号
-    email VARCHAR(100) UNIQUE,                 -- 唯一邮箱
+    phone VARCHAR(20) UNIQUE COLLATE NOCASE,   -- 唯一手机号(忽略大小写)
+    email VARCHAR(100) UNIQUE COLLATE NOCASE,  -- 唯一邮箱(忽略大小写)
     is_locked BOOLEAN DEFAULT FALSE            -- 是否锁定(禁止登录)
 );
 
