@@ -220,7 +220,6 @@ def on_file_selected(index: int, main_window: QMainWindow, container: QWidget):
                 container.des3_radio.setChecked(True)
             case 'SM4':
                 container.sm4_radio.setChecked(True)
-        container.a
         main_window.current_file = current_file
 
 

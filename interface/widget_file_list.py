@@ -233,13 +233,15 @@ def create_copy_button(container, file):
 
 def _handle_download(container, file):
     """处理下载操作"""
-    # if gcache.current_user['role'] == 'admin':
-    #     is_success, msg = delete_file(gcache.current_user, file)
-    #     if is_success:
-    #         load_table_data(container, container.query)
-    #     else:
-    #         MyQLabelTip(msg, container)
-    #     return
+    if gcache.current_user['role'] == 'admin':
+        path, _ = QFileDialog.getSaveFileName(container, "保存文件", os.path.join(config.path.download, file['file_name']), "All Files (*)")
+
+        if path:
+            is_success, msg = download_file(file, file['password'].replace(DELIMITER, ''), Path(path))
+            MyQLabelTip(msg, container, is_success)
+        else:
+            MyQLabelTip("无效下载路径, 请确认", container)
+        return
     # 输入密码对话框
     dialog = QInputDialog(container)  # container 作为父组件
     dialog.setWindowTitle("文件密码")
@@ -262,7 +264,6 @@ def _handle_download(container, file):
             path, _ = QFileDialog.getSaveFileName(container, "保存文件", os.path.join(config.path.download, file['file_name']), "All Files (*)")
 
             if path:
-                # 执行下载逻辑（需要实现实际下载方法）
                 is_success, msg = download_file(file, password, Path(path))
                 MyQLabelTip(msg, container, is_success)
                 return

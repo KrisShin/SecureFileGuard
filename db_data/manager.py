@@ -60,7 +60,7 @@ class DBManager(object):
                     sql_str += f" AND "
                 else:
                     sql_str += f" WHERE "
-                sql_str += f"username LIKE ? OR phone LIKE ? OR email LIKE ?"
+                sql_str += f"(username LIKE ? OR phone LIKE ? OR email LIKE ?)"
                 sql_values.extend([f'%{query}%'] * 3)
             sql_str += ' ORDER BY username'
             cursor = conn.execute(sql_str, sql_values)
@@ -200,8 +200,8 @@ class DBManager(object):
                     sql_str += f" AND "
                 else:
                     sql_str += f" WHERE "
-                sql_str += f"file_name LIKE ? OR user_name LIKE ? OR algorithm LIKE ?"
-                sql_values.extend([f'%{query}%'] * 2)
+                sql_str += f"(file_name LIKE ? OR user_name LIKE ? OR algorithm LIKE ?)"
+                sql_values.extend([f'%{query}%'] * 3)
             sql_str += ' ORDER BY file_name, algorithm '
             cursor = conn.execute(sql_str, sql_values)
             rows = cursor.fetchall()

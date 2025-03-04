@@ -123,7 +123,7 @@ def _build_user_table(main_window: QMainWindow, container: QWidget):
 def _handle_delete_user(container: QWidget, row_index: int):
     """处理删除用户操作"""
     delete_user(gcache.current_user, container.user_list[row_index]['username'])
-    load_table_data(container)
+    load_table_data(container, container.query)
 
 
 def load_table_data(container: QWidget, query: str = ''):
