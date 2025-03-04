@@ -74,6 +74,7 @@ def edit_profile(username: str, params: dict):
     db.update_user_info(username, params)
     if gcache.current_user == username:
         user = gcache.current_user
+        gcache.current_user = {}
         for key, val in params.items():
             user[key] = val
         gcache.current_user = user
