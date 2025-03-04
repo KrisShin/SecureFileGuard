@@ -8,12 +8,15 @@ from setting.config_loader import config
 
 
 class DBManager(object):
+    """数据库管理类"""
+
     def __init__(self, db_path: str):
-        self.db_path = db_path
+        self.db_path = db_path  # 读取数据库文件路径
         self._init_tables()
 
     @contextmanager
     def _get_connection(self):
+        """连接数据库"""
         conn = connect(self.db_path)
         conn.row_factory = Row  # 支持字典式访问
         try:
@@ -22,19 +25,20 @@ class DBManager(object):
             conn.close()
 
     def _init_tables(self):
+        """初始化表格"""
         with self._get_connection() as conn:
-            # 执行所有建表SQL
+            # 执行初始化表格sql语句L
             conn.executescript(SQL_CREATE_TABLES)
 
     def init_amdin_user(self) -> dict:
-        """初始化管理员用户"""
+        """初始化管理员用户, 查找是否有admin用户, 没有则新建admin用户"""
         admin_obj = self.get_user('admin')
         if not admin_obj:
             password = get_password_hash(config.other.default_admin_password)
             with self._get_connection() as conn:
                 conn.execute('''INSERT INTO sfg_user (username, password, role) VALUES (?, ?, ?)''', ('admin', password, 'admin'))
-                conn.commit()
-        # add test user
+                conn.commit()  # 提交sql命令
+        # 增加一些测试用户
         # self._add_test_user()
 
     def get_user(self, username) -> dict:
@@ -47,6 +51,7 @@ class DBManager(object):
     def get_user_list(self, params: dict, query: str = '') -> List[dict]:
         """查询用户信息列表"""
         with self._get_connection() as conn:
+            """拼接sql语句适配各种参数"""
             sql_str = """SELECT * FROM sfg_user """
             sql_values = []
             if params:
@@ -62,13 +67,14 @@ class DBManager(object):
                     sql_str += f" WHERE "
                 sql_str += f"(username LIKE ? OR phone LIKE ? OR email LIKE ?)"
                 sql_values.extend([f'%{query}%'] * 3)
-            sql_str += ' ORDER BY username'
+            sql_str += ' ORDER BY username'  # 根据用户名排序
             cursor = conn.execute(sql_str, sql_values)
             rows = cursor.fetchall()
             return rows and [dict(user_obj) for user_obj in rows]
 
     # 用户操作示例
     def create_user(self, user_data: Dict) -> bool:
+        """创建用户"""
         password = get_password_hash(user_data['password'])
         with self._get_connection() as conn:
             try:
@@ -83,6 +89,7 @@ class DBManager(object):
                 return False
 
     def update_user_info(self, username: str, params: dict) -> Dict:
+        """更新用户数据"""
         sql_str = """update sfg_user set """
         if not params:
             return
@@ -103,6 +110,7 @@ class DBManager(object):
                 return False
 
     def update_user_last_login(self, username: str):
+        """更新用户上次登录时间"""
         with self._get_connection() as conn:
             try:
                 conn.execute('''UPDATE sfg_user SET last_login = CURRENT_TIMESTAMP WHERE username=? ''', (username,))
@@ -113,6 +121,7 @@ class DBManager(object):
                 return False
 
     def delete_user(self, username: str):
+        """删除用户"""
         with self._get_connection() as conn:
             try:
                 conn.execute('''DELETE FROM sfg_user WHERE username=? ''', (username,))
@@ -140,7 +149,9 @@ class DBManager(object):
                     + '.'
                     + ''.join(random.choices(string.ascii_letters, k=random.randint(2, 5)))
                 )
-                last_login = datetime.datetime(day=random.randint(1, 28), month=random.randint(1, 12), year=2025, hour=random.randint(0, 23), minute=random.randint(0, 59))
+                last_login = datetime.datetime(
+                    day=random.randint(1, 28), month=random.randint(1, 12), year=2025, hour=random.randint(0, 23), minute=random.randint(0, 59)
+                )
                 conn.execute(
                     '''INSERT INTO sfg_user (username, password, role, phone, email, last_login) VALUES (?, ?, ?, ?, ?, ?)''',
                     (username, password, 'user', phone, email, last_login),
@@ -149,6 +160,7 @@ class DBManager(object):
 
     # 上传文件
     def upload_file(self, password, password_hash, iv, username, file_path, algorithm, file_size, file_name) -> bool:
+        """上传用户"""
         with self._get_connection() as conn:
             try:
                 conn.execute(
@@ -162,6 +174,7 @@ class DBManager(object):
                 return False
 
     def edit_file(self, file_id, password, password_hash, iv, algorithm, file_name) -> bool:
+        # 编辑用户信息
         with self._get_connection() as conn:
             try:
                 conn.execute(
@@ -208,6 +221,7 @@ class DBManager(object):
             return rows and [dict(file_obj) for file_obj in rows]
 
     def delete_file(self, file_id: int):
+        """删除文件"""
         with self._get_connection() as conn:
             try:
                 conn.execute('''DELETE FROM sfg_encrypted_file WHERE id=? ''', (file_id,))

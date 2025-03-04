@@ -1,5 +1,15 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from interface.custom_widget import MyQLabelTip
 from module.user_apis import edit_profile
@@ -7,7 +17,7 @@ from setting.global_variant import gcache
 
 
 def set_edit_profile_ui(main_window: QMainWindow, content_widget: QWidget):
-    """显示编辑信息界面（居中版本）"""
+    """显示编辑信息界面"""
     # 清空右侧区域
     if content_widget.layout():
         QWidget().setLayout(content_widget.layout())
@@ -52,11 +62,12 @@ def _build_profile_form(main_window: QMainWindow, container: QWidget):
 
     # 表单字段
     form_layout = QFormLayout()
-    form_layout.setVerticalSpacing(25)
+    form_layout.setVerticalSpacing(25)  # 添加间隔
     form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
     # 联系电话
     main_window.new_phone_edit = QLineEdit()
+    # 如果当前用户已填写手机号则填入到输入框中
     if gcache.current_user and gcache.current_user['phone']:
         main_window.new_phone_edit.setText(gcache.current_user['phone'])
     main_window.new_phone_edit.setPlaceholderText("请输入11位手机号")
@@ -64,6 +75,7 @@ def _build_profile_form(main_window: QMainWindow, container: QWidget):
 
     # 电子邮箱
     main_window.new_email_edit = QLineEdit()
+    # 如果当前用户已填写电子邮箱则填入到输入框中
     if gcache.current_user and gcache.current_user['email']:
         main_window.new_email_edit.setText(gcache.current_user['email'])
     main_window.new_email_edit.setPlaceholderText("输入有效邮箱地址")
@@ -97,6 +109,7 @@ def _build_profile_form(main_window: QMainWindow, container: QWidget):
         QPushButton:hover { background: #66b1ff; }
     """
     )
+    # 绑定修改信息方法
     submit_btn.clicked.connect(lambda: handle_edit_profile(main_window, container))
 
     # 布局组装
@@ -121,6 +134,7 @@ def handle_edit_profile(main_window: QMainWindow, container: QWidget):
     try:
         # 这里应该添加实际的数据库更新操作
         params = {}
+        # 如果没有填写信息或者信息跟原本相同则不提交
         if new_phone and new_phone != gcache.current_user['phone']:
             params['phone'] = new_phone
         if new_email and new_email != gcache.current_user['email']:

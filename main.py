@@ -15,12 +15,12 @@ if __name__ == "__main__":
     # 第一步：显示启动页
     splash = SplashScreen()
     splash.show()
-    login_window = LoginWindow()
-    login_window.login_success.connect(login_window.show_main)
+    login_window = LoginWindow()  # 初始化登录页面
+    login_window.login_success.connect(login_window.show_main)  # 连接登录之后展示主页面
 
     # 设置定时器
     QTimer.singleShot(
-        config.other.splash_timeout,
+        config.other.splash_timeout,  # 从设置读取启动页展示时间
         lambda: (
             login_window.show(),  # 显示登录窗口
             splash.close(),  # 关闭启动页
@@ -28,4 +28,4 @@ if __name__ == "__main__":
         ),
     )
 
-    app.exec()
+    app.exec()  # 没有活跃页面时退出程序

@@ -11,6 +11,8 @@ from setting.config_loader import config
 
 
 class LoginWindow(QWidget):
+    """登录窗口"""
+
     login_success = Signal()
 
     def __init__(self):
@@ -20,7 +22,7 @@ class LoginWindow(QWidget):
         self.setup_ui()
 
     def set_background(self, img_path):
-        """设置背景"""
+        """设置背景, 根据窗口大小拉伸"""
         pixmap = QPixmap(img_path).scaled(self.size(), Qt.KeepAspectRatioByExpanding)
 
         scaled_pixmap = pixmap.scaled(
@@ -47,11 +49,13 @@ class LoginWindow(QWidget):
         else:
             self.main_window = MainWindow()
             self.login_success.emit()
+            # 登录成功展示主页之后关闭登录页面
             self.show_main()
             QTimer.singleShot(200, self.close)
             MyQLabelTip(f"欢迎{username}登录成功!", self)
 
     def show_main(self):
+        # 关联主窗口关闭直接销毁整个程序
         self.main_window.destroyed.connect(QApplication.quit)
         self.main_window.show()
 
@@ -77,9 +81,9 @@ class LoginWindow(QWidget):
         self.btn_switch = QPushButton("前往注册", objectName="btnSwitch")
         self.btn_submit = QPushButton("登 录", objectName="btnSubmit")
 
-        # TODO: 测试数据
-        self.username.setText('admin')
-        self.password_widget.setText('123qwe')
+        # TODO: 测试数据默认填好管理员账号
+        # self.username.setText('admin')
+        # self.password_widget.setText('123qwe')
 
         # 表单布局
         form_layout = QFormLayout()

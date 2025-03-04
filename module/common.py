@@ -13,12 +13,12 @@ pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
 def get_password_hash(password: str) -> str:
-    """Generate password hashed value."""
+    """密码加密"""
     return pwd_context.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Check plain password whether right or not"""
+    """验证密码"""
     try:
         return pwd_context.verify(plain_password, hashed_password)
     except:
@@ -43,8 +43,13 @@ def generate_strong_password():
         random.shuffle(password)
         password = ''.join(password)
 
-        # 验证密码强度
-        if any(c.islower() for c in password) and any(c.isupper() for c in password) and any(c.isdigit() for c in password) and any(c in "!@#$%^&*" for c in password):
+        # 验证密码强度, 大小写数字加特殊符号
+        if (
+            any(c.islower() for c in password)
+            and any(c.isupper() for c in password)
+            and any(c.isdigit() for c in password)
+            and any(c in "!@#$%^&*" for c in password)
+        ):
             break
     return password
 
@@ -52,12 +57,13 @@ def generate_strong_password():
 def create_dir_if_not_exists(file_path: Path):
     """创建文件夹路径"""
     if isinstance(file_path, str):
-        file_path = Path(file_path)
+        file_path = Path(file_path)  # 字符串对象转换为Path对象
     if not os.path.exists(file_path.parent):
-        os.makedirs(file_path.parent)
+        os.makedirs(file_path.parent)  # 创建多层文件夹
 
 
 def handle_set_strong_password(container: QWidget, password_line: QWidget):
+    """生成强密码并复制到剪贴板"""
     password = generate_strong_password()
     password_line.setText(password)
     clipboard = QApplication.clipboard()

@@ -8,7 +8,7 @@ from setting.global_variant import gcache
 
 
 def set_change_password_ui(main_window: QMainWindow, content_widget: QWidget):
-    """显示密码修改界面（居中版本）"""
+    """显示密码修改界面"""
     # 清空右侧区域
     if content_widget.layout():
         QWidget().setLayout(content_widget.layout())
@@ -42,6 +42,7 @@ def set_change_password_ui(main_window: QMainWindow, content_widget: QWidget):
 
 def _build_password_form(main_window: QMainWindow, container: QWidget):
     """构建表单内容"""
+    # 设置容器布局
     container.setLayout(QVBoxLayout())
     container.layout().setContentsMargins(40, 30, 40, 30)
 
@@ -51,19 +52,24 @@ def _build_password_form(main_window: QMainWindow, container: QWidget):
     title.setAlignment(Qt.AlignmentFlag.AlignCenter)
     container.layout().addWidget(title)
 
-    # 表单字段
+    # 表单布局
     form_layout = QFormLayout()
     form_layout.setVerticalSpacing(25)
     form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
-    # 原密码
-    main_window.org_password_edit = PasswordToggleWidget(placeholder='请输入原密码', style='height:35px;border-radius: 12px; background: rgba(0, 0, 0, 0.2);')
+    # 原密码输入框
+    main_window.org_password_edit = PasswordToggleWidget(
+        placeholder='请输入原密码', style='height:35px;border-radius: 12px; background: rgba(0, 0, 0, 0.2);'
+    )
     main_window.org_password_edit.setFixedHeight(35)
 
-    # 新密码
-    main_window.new_password_edit = PasswordToggleWidget(placeholder='请输入新密码', style='height:35px;border-radius: 12px; background: rgba(0, 0, 0, 0.2);')
+    # 新密码输入框
+    main_window.new_password_edit = PasswordToggleWidget(
+        placeholder='请输入新密码', style='height:35px;border-radius: 12px; background: rgba(0, 0, 0, 0.2);'
+    )
     main_window.new_password_edit.setFixedHeight(35)
 
+    # 设置标签背景透明
     label_phone = QLabel("原密码：")
     label_email = QLabel("新密码：")
     label_phone.setStyleSheet('background:transparent')
@@ -73,7 +79,7 @@ def _build_password_form(main_window: QMainWindow, container: QWidget):
     form_layout.addRow(label_phone, main_window.org_password_edit)
     form_layout.addRow(label_email, main_window.new_password_edit)
 
-    # 按钮容器重构
+    # 按钮容器布局
     btn_container = QWidget()
     btn_container.setLayout(QHBoxLayout())
     btn_container.layout().setContentsMargins(0, 20, 0, 0)
@@ -94,6 +100,7 @@ def _build_password_form(main_window: QMainWindow, container: QWidget):
         """
     )
 
+    # 绑定生成强密码功能, 传入控件用于设置生成密码到控件中
     generate_btn.clicked.connect(lambda: (handle_set_strong_password(container, main_window.new_password_edit)))
 
     submit_btn = QPushButton("提交修改")
@@ -127,17 +134,19 @@ def _build_password_form(main_window: QMainWindow, container: QWidget):
 
 def handle_change_password(main_window: QMainWindow, container: QWidget):
     """处理密码修改提交"""
+    # 获取填入的原密码和新密码, 并去掉前后的空格
     org_password = main_window.org_password_edit.text().strip()
     new_password = main_window.new_password_edit.text().strip()
+
     if not all((org_password, new_password)):
         MyQLabelTip("原密码和新密码不能为空", container, False)
         return
-
     try:
         params = {'org_password': org_password, 'new_password': new_password}
         is_success, message = change_password(gcache.current_user['username'], params)
         if is_success:
             MyQLabelTip("修改成功, 请重新登录", container)
+            # 修改密码成功之后触发退出登录
             main_window.logout()
         else:
             MyQLabelTip(message, container, is_success)

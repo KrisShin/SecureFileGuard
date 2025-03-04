@@ -9,8 +9,11 @@ from setting.global_variant import SPLASH_FILE
 
 
 class SplashScreen(QWidget):
+    """启动页面"""
+
     def __init__(self):
         super().__init__()
+        # 创建图片对象, 读取config中配置的背景图
         self.original_pixmap = QPixmap(Path(config.path.static) / SPLASH_FILE)
 
         # 窗口初始化设置
@@ -42,10 +45,10 @@ class SplashScreen(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # 1. 绘制缩放后的模糊背景
+        # 绘制缩放后的模糊背景
         self.draw_scaled_background(painter)
 
-        # 2. 绘制文字信息
+        # 绘制文字信息
         self.draw_text_info(painter)
 
         painter.end()

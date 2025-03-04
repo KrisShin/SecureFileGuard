@@ -186,6 +186,7 @@ def decrypt_file_DES(file_id: int, key: bytes):
 
 
 def encrypt_file(algorithm: str, input_file, username, file_name, password, plaintext: str = '', file_path: str = ''):
+    # 自适应加密算法填充密码长度
     match algorithm:
         case 'AES':
             if len(password) > 32:
@@ -211,6 +212,7 @@ def encrypt_file(algorithm: str, input_file, username, file_name, password, plai
 
 
 def decrypt_file(algorithm: str, password: str, file_id: int):
+    # 自适应解密
     match algorithm:
         case 'AES':
             filled_password = password.rjust(32, DELIMITER)

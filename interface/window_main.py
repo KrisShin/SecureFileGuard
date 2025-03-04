@@ -19,9 +19,9 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle(f"{config.app.name} - v{config.app.version}({config.app.release_date})")
         self.resize(config.other.width, config.other.height)
-        self.user = gcache.current_user
+        self.user = gcache.current_user  # 加载当前登录用户
         self.init_ui()
-        self.open_file_manager()
+        self.open_file_manager()  # 默认打开文件管理页面
 
     def init_ui(self):
         # 创建主布局容器
@@ -100,7 +100,7 @@ class MainWindow(QMainWindow):
         transparent = 0.2
         for text, callback in bottom_buttons:
             self.create_menu_button(text, callback, menu_layout, style=f"background-color: rgba(255, 50, 0, {transparent});")
-            transparent += 0.2
+            transparent += 0.2  # 让两个按钮颜色深度不同
 
     def create_menu_button(self, text, callback, layout, style=""):
         """创建统一风格的菜单按钮"""
@@ -121,7 +121,7 @@ class MainWindow(QMainWindow):
         btn.clicked.connect(callback)
         layout.addWidget(btn)
 
-    # 以下为功能方法示例 ---------------------------------
+    # 以下为加载右边布局页面
     def open_file_manager(self):
         set_file_list_ui(self, self.content_widget)
 
@@ -145,11 +145,11 @@ class MainWindow(QMainWindow):
         """退出登录处理"""
         from interface.window_login import LoginWindow
 
+        # 展示登录窗口
         self.login_window = LoginWindow()
         self.login_window.show()
-
+        # 清空当前用户
         gcache.current_user = {}
         # 触发登录窗口重新显示
         QTimer.singleShot(200, lambda: (self.close()))
-
         self.close()

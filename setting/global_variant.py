@@ -16,6 +16,8 @@ SUCCESS_RGB = '35, 217, 110'
 
 
 class GlobalCache(QObject):
+    """使用单例模式创建全局缓存"""
+
     _instance = None
     current_user_changed = Signal(str)  # 当前用户变化的信号
 

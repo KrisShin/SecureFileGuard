@@ -6,10 +6,12 @@ from setting.global_variant import gcache
 
 
 def validate_email(email: str) -> bool:
+    """校验邮箱格式"""
     return re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email)
 
 
 def validate_phone(phone: str) -> bool:
+    """校验手机号格式"""
     return re.match(r'^1[3-9]\d{9}$', phone)
 
 
@@ -46,6 +48,7 @@ def login(username: str, password: str) -> tuple:
 
     if verify_password(password, user_obj['password']):
         gcache.current_user = user_obj
+        # 更新用户登陆时间
         db.update_user_last_login(username)
         return True, None
     else:
@@ -105,6 +108,7 @@ def get_user_list(current_user: dict, query: str = '') -> list:
 
 
 def delete_user(current_user: dict, username: str) -> bool:
+    """删除用户"""
     if current_user['role'] != 'admin':
         return False
     db.delete_user(username)

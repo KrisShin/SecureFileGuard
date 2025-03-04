@@ -1,5 +1,17 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QButtonGroup, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QPushButton, QRadioButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QButtonGroup,
+    QFileDialog,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QPushButton,
+    QRadioButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from interface.custom_widget import MyQLabelTip, PasswordToggleWidget
 from module.common import handle_set_strong_password
@@ -9,7 +21,7 @@ from setting.global_variant import gcache
 
 
 def setup_file_upload_ui(main_window: QMainWindow, content_widget: QWidget):
-    """显示文件上传界面（居中版本）"""
+    """显示文件上传界面"""
     # 清空右侧区域
     if content_widget.layout():
         QWidget().setLayout(content_widget.layout())
@@ -42,6 +54,7 @@ def setup_file_upload_ui(main_window: QMainWindow, content_widget: QWidget):
 
 
 def _build_upload_form(main_window: QMainWindow, container: QWidget):
+    """文件上传表单"""
     container.setLayout(QVBoxLayout())
     container.layout().setContentsMargins(40, 30, 40, 30)
 
@@ -102,7 +115,9 @@ def _build_upload_form(main_window: QMainWindow, container: QWidget):
     algorithm_layout.addWidget(container.sm4_radio)
 
     # 密码输入框
-    container.password = PasswordToggleWidget(placeholder='输入加密密码', style='height:35px;border-radius: 12px; background: rgba(0, 0, 0, 0.2);')
+    container.password = PasswordToggleWidget(
+        placeholder='输入加密密码', style='height:35px;border-radius: 12px; background: rgba(0, 0, 0, 0.2);'
+    )
     container.password.setFixedHeight(35)
 
     # 生成强密码按钮
@@ -162,6 +177,7 @@ def _build_upload_form(main_window: QMainWindow, container: QWidget):
 
 
 def select_file(container_widget):
+    """选择文件路径"""
     file_dialog = QFileDialog(container_widget)
     file_path, _ = file_dialog.getOpenFileName(container_widget, "选择文件", "", "所有文件 (*.*)")
     if file_path:
@@ -171,11 +187,14 @@ def select_file(container_widget):
 
 
 def submit(container: QWidget):
+    """提交文件"""
     selected_algorithm = get_selected_algorithm(container)
     filename: str = container.file_name.text()
     password: str = container.password.text()
 
-    is_success, message = file_upload(selected_algorithm, filename, password, container.selected_file, gcache.current_user['username'])
+    is_success, message = file_upload(
+        selected_algorithm, filename, password, container.selected_file, gcache.current_user['username']
+    )
     MyQLabelTip(message, container, is_success)
 
 

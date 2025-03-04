@@ -1,5 +1,17 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QAbstractItemView, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMainWindow, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
 
 from interface.custom_widget import MyQLabelTip
 from module.user_apis import delete_user, get_user_list
@@ -7,7 +19,7 @@ from setting.global_variant import gcache
 
 
 def set_user_manage_ui(main_window: QMainWindow, content_widget: QWidget):
-    """显示密码修改界面（居中版本）"""
+    """显示密码修改界面"""
     # 清空右侧区域
     if content_widget.layout():
         QWidget().setLayout(content_widget.layout())
@@ -83,7 +95,9 @@ def _build_user_table(main_window: QMainWindow, container: QWidget):
     # 表格
     container.table = QTableWidget()
     container.table.setColumnCount(6)
+    # 表头
     container.table.setHorizontalHeaderLabels(["序号", "用户名", "手机号", "邮箱", "上次登录时间", "操作"])
+    # 自适应列宽
     container.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
     container.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
     container.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
@@ -111,6 +125,7 @@ def _build_user_table(main_window: QMainWindow, container: QWidget):
     )
     container.table.setRowHeight(0, 48)  # 设置行高
     container.table.setFixedHeight(400)
+    # 加载默认表格数据
     load_table_data(container)
 
     # 组装布局
@@ -121,21 +136,23 @@ def _build_user_table(main_window: QMainWindow, container: QWidget):
 
 
 def _handle_delete_user(container: QWidget, row_index: int):
-    """处理删除用户操作"""
+    """处理删除用户操作, 此页面只有管理员能进入, 所以无需校验权限"""
     delete_user(gcache.current_user, container.user_list[row_index]['username'])
     load_table_data(container, container.query)
 
 
 def load_table_data(container: QWidget, query: str = ''):
+    """加载表格数据"""
     user_list = get_user_list(gcache.current_user, query)
     MyQLabelTip(f"查询完成, 共{len(user_list)}条数据!", container)
-    container.user_list = user_list
-    container.query = query
+    container.user_list = user_list  # 保存用户列表
+    container.query = query  # 保存查询字段
     container.table.setRowCount(0)
     table = container.table
     for index, user in enumerate(user_list):
         row = table.rowCount()
         table.insertRow(row)
+        # 加载表格内容
         table.setItem(row, 0, QTableWidgetItem(str(index + 1)))
         table.setItem(row, 1, QTableWidgetItem(user['username']))
         table.setItem(row, 2, QTableWidgetItem(user['phone']))

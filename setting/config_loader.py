@@ -9,11 +9,14 @@ from setting.global_variant import CONFIG_PATH
 class ConfigLoadError(Exception):
     """自定义配置加载异常"""
 
-    pass
+    def __init__(self, *args):
+        super().__init__(*args)
+        # 打印异常
+        print(args)
 
 
 class ConfigNode(object):
-    """配置节点包装类，支持点号访问"""
+    """配置节点包装类，支持点号访问, 转为对象"""
 
     def __init__(self, config_dict: Dict[str, Any]):
         for key, value in config_dict.items():

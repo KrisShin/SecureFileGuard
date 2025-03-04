@@ -5,10 +5,12 @@ from setting.global_variant import DANGER_RGB, SUCCESS_RGB
 
 
 class PasswordToggleWidget(QWidget):
+    """自定义带密码展示切换按钮的密码输入框"""
+
     def __init__(self, parent=None, placeholder: str = '请输入密码', style: str = ''):
         super().__init__(parent)
         self.placeholder = placeholder
-        self.css = style
+        self.css = style  # 可以传入自定义css
         self.init_ui()
 
     def init_ui(self):
@@ -47,9 +49,11 @@ class PasswordToggleWidget(QWidget):
 
 
 class MyQLabelTip(QWidget):
+    """自定义的通知标签"""
+
     def __init__(self, text: str, container: QWidget, is_success: bool = True):
         super().__init__(container)
-
+        # 设置背景颜色
         bg_color = SUCCESS_RGB if is_success else DANGER_RGB
 
         # 创建半透明浮动标签
@@ -64,9 +68,10 @@ class MyQLabelTip(QWidget):
             }}
         """
         )
+        # 根据字数计算显示长度
         tip_label.setFixedWidth(20 + len(text) * 12)
         tip_label.move(20, 20)  # 调整显示位置
         tip_label.show()
 
-        # 设置2秒后自动隐藏
+        # 设置2秒后自动关闭
         QTimer.singleShot(2000, tip_label.close)

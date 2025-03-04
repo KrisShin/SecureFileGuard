@@ -25,7 +25,7 @@ from setting.global_variant import DELIMITER, gcache
 
 
 def set_file_list_ui(main_window: QMainWindow, content_widget: QWidget):
-    """显示密码修改界面（居中版本）"""
+    """显示文件列表界面"""
     # 清空右侧区域
     if content_widget.layout():
         QWidget().setLayout(content_widget.layout())
@@ -58,7 +58,7 @@ def set_file_list_ui(main_window: QMainWindow, content_widget: QWidget):
 
 
 def _build_file_list_table(main_window: QMainWindow, container: QWidget):
-    """构建用户管理页面"""
+    """构建文件列表页面"""
     container.setLayout(QVBoxLayout())
     container.layout().setContentsMargins(40, 30, 40, 30)
 
@@ -94,6 +94,7 @@ def _build_file_list_table(main_window: QMainWindow, container: QWidget):
         QPushButton:hover { background: #66b1ff; }
     """
     )
+    # 绑定加载数据方法
     search_btn.clicked.connect(lambda: load_table_data(container, search_input.text()))
     search_layout.addWidget(search_input)
     search_layout.addWidget(search_btn, 0, Qt.AlignmentFlag.AlignRight)
@@ -101,8 +102,10 @@ def _build_file_list_table(main_window: QMainWindow, container: QWidget):
     # 表格
     container.table = QTableWidget()
     container.table.setColumnCount(6)
+    # 设置表头名称
     container.table.setHorizontalHeaderLabels(["序号", "文件名", "加密算法", "上传用户", "修改时间", "操作"])
     container.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+    # 设置列按照内容拉伸列宽
     container.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
     container.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
     container.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
@@ -138,21 +141,24 @@ def _build_file_list_table(main_window: QMainWindow, container: QWidget):
 
 
 def load_table_data(container: QWidget, query: str = ''):
+    """加载表格数据"""
     file_list = get_file_list(gcache.current_user, query)
     MyQLabelTip(f"查询完成, 共{len(file_list)}条数据!", container)
-    container.file_list = file_list
-    container.query = query
-    container.table.setRowCount(0)
+    container.file_list = file_list  # 保存文件列表
+    container.query = query  # 保存搜索字段
+    container.table.setRowCount(0)  # 清空表格
     table = container.table
     for index, file in enumerate(file_list):
         row = table.rowCount()
         table.insertRow(row)
+        # 加载每行表格内容
         table.setItem(row, 0, QTableWidgetItem(str(index + 1)))
         table.setItem(row, 1, QTableWidgetItem(file['file_name']))
         table.setItem(row, 2, QTableWidgetItem(file['algorithm']))
         table.setItem(row, 3, QTableWidgetItem(file['user_name']))
         table.setItem(row, 4, QTableWidgetItem(file['modified_at']))
 
+        # 操作列按钮布局
         option_widget = QWidget()
         option_widget.setStyleSheet("""background: transparent;""")
         button_layout = QHBoxLayout(option_widget)
@@ -167,7 +173,7 @@ def load_table_data(container: QWidget, query: str = ''):
 
         button_layout.addWidget(btn_download)
         button_layout.addWidget(btn_delete)
-        # 管理员密码复制按钮（第7列）
+        # 管理员才显示密码复制按钮
         if gcache.current_user['role'] == 'admin':
             btn_copy = create_copy_button(container, file)
             button_layout.addWidget(btn_copy)
@@ -227,16 +233,25 @@ def create_copy_button(container, file):
         QPushButton:hover { background: #85ce61; }
     """
     )
-    btn.clicked.connect(lambda: (QApplication.clipboard().setText(file['password'].replace(DELIMITER, '')), MyQLabelTip('复制密码成功', container)))
+    btn.clicked.connect(
+        lambda: (
+            QApplication.clipboard().setText(file['password'].replace(DELIMITER, '')),
+            MyQLabelTip('复制密码成功', container),
+        )
+    )
     return btn
 
 
 def _handle_download(container, file):
     """处理下载操作"""
     if gcache.current_user['role'] == 'admin':
-        path, _ = QFileDialog.getSaveFileName(container, "保存文件", os.path.join(config.path.download, file['file_name']), "All Files (*)")
+        # 管理员无需验证密码, 直接选择路径下载
+        path, _ = QFileDialog.getSaveFileName(
+            container, "保存文件", os.path.join(config.path.download, file['file_name']), "All Files (*)"
+        )
 
         if path:
+            # 使用保存的密码直接解密文件并保存
             is_success, msg = download_file(file, file['password'].replace(DELIMITER, ''), Path(path))
             MyQLabelTip(msg, container, is_success)
         else:
@@ -261,7 +276,9 @@ def _handle_download(container, file):
         # 选择保存路径
         is_password_correct, msg = varify_file_password(file, password)
         if is_password_correct:
-            path, _ = QFileDialog.getSaveFileName(container, "保存文件", os.path.join(config.path.download, file['file_name']), "All Files (*)")
+            path, _ = QFileDialog.getSaveFileName(
+                container, "保存文件", os.path.join(config.path.download, file['file_name']), "All Files (*)"
+            )
 
             if path:
                 is_success, msg = download_file(file, password, Path(path))
@@ -276,8 +293,10 @@ def _handle_download(container, file):
 def _handle_delete(container, file):
     """处理删除操作"""
     if gcache.current_user['role'] == 'admin':
+        # 管理员无需密码直接删除
         is_success, msg = delete_file(gcache.current_user, file)
         if is_success:
+            # 删除成功后刷新表格内容
             load_table_data(container, container.query)
         else:
             MyQLabelTip(msg, container)

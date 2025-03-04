@@ -1,5 +1,18 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QButtonGroup, QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QPushButton, QRadioButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QButtonGroup,
+    QComboBox,
+    QFileDialog,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QPushButton,
+    QRadioButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from interface.custom_widget import MyQLabelTip, PasswordToggleWidget
 from module.common import handle_set_strong_password
@@ -9,7 +22,7 @@ from setting.global_variant import gcache
 
 
 def setup_file_edit_ui(main_window: QMainWindow, content_widget: QWidget):
-    """显示文件编辑界面（居中版本）"""
+    """显示文件编辑界面"""
     # 清空右侧区域
     if content_widget.layout():
         QWidget().setLayout(content_widget.layout())
@@ -42,6 +55,7 @@ def setup_file_edit_ui(main_window: QMainWindow, content_widget: QWidget):
 
 
 def _build_edit_form(main_window: QMainWindow, container: QWidget):
+    """文件编辑表单"""
     container.setLayout(QVBoxLayout())
     container.layout().setContentsMargins(40, 30, 40, 30)
 
@@ -56,7 +70,7 @@ def _build_edit_form(main_window: QMainWindow, container: QWidget):
     container.file_selector.setFixedHeight(35)
     container.file_selector.setStyleSheet("height:35px;border-radius: 12px; background: rgba(0, 0, 0, 0.6);")
 
-    # 从数据库获取文件列表并填充
+    # 从数据库获取文件列表并填充选项
     main_window.file_list = get_file_list(gcache.current_user)
     container.file_selector.addItems([f"{f['file_name']}-{f['algorithm']}" for f in main_window.file_list])
     main_window.current_file = main_window.file_list[0] if main_window.file_list else None
@@ -70,18 +84,18 @@ def _build_edit_form(main_window: QMainWindow, container: QWidget):
     container.file_path_container = QHBoxLayout()
     # 选择文件按钮
     btn_select_file = QPushButton("选择文件")
-    btn_select_file.setDisabled(True)
+    btn_select_file.setDisabled(True)  # 禁用按钮, 编辑文件不能修改路径
     btn_select_file.setStyleSheet("padding:8px; background: rgba(0, 180, 120, 0.8);")
     btn_select_file.clicked.connect(lambda: select_file(container))
 
     container.file_path_container.addWidget(container.file_path)
     container.file_path_container.addWidget(btn_select_file)
 
-    # 文件名输入框（可编辑）
+    # 文件名输入框（解密后可编辑）
     container.file_name = QLineEdit(placeholderText="文件名")
     container.file_name.setFixedHeight(35)
 
-    # 加密算法单选框
+    # 加密算法单选框组
     container.algorithm_group = QButtonGroup(container)
     container.aes_radio = QRadioButton("AES")
     container.des_radio = QRadioButton("DES")
@@ -98,7 +112,7 @@ def _build_edit_form(main_window: QMainWindow, container: QWidget):
     container.algorithm_group.addButton(container.des3_radio)
     container.algorithm_group.addButton(container.sm4_radio)
 
-    # 默认选中 config.security.default_algorithm
+    # 默认选中 config.security.default_algorithm 或者选中文件的加密方法
     algorithm = config.security.default_algorithm
     if main_window.current_file:
         container.file_path.setText(main_window.current_file['file_path'])
@@ -121,10 +135,12 @@ def _build_edit_form(main_window: QMainWindow, container: QWidget):
     algorithm_layout.addWidget(container.sm4_radio)
 
     # 密码输入框
-    container.password = PasswordToggleWidget(placeholder='输入加密密码', style='height:35px;border-radius: 12px; background: rgba(0, 0, 0, 0.2);')
+    container.password = PasswordToggleWidget(
+        placeholder='输入加密密码', style='height:35px;border-radius: 12px; background: rgba(0, 0, 0, 0.2);'
+    )
     container.password.setFixedHeight(35)
 
-    # 生成强密码按钮
+    # 解密按钮
     container.decrypted_btn = QPushButton("解密文件")
     container.decrypted_btn.setFixedSize(150, 40)
     container.decrypted_btn.setStyleSheet(
@@ -170,6 +186,7 @@ def _build_edit_form(main_window: QMainWindow, container: QWidget):
     )
     container.btn_submit.clicked.connect(lambda: submit(main_window, container))
 
+    # 添加一个提示信息
     label_hint = QLabel("* 选择文件之后请先输入密码解锁之后才能编辑!")
     label_hint.setStyleSheet("color: red; font-size: 14px; background: transparent")
     # 布局管理
@@ -191,6 +208,7 @@ def _build_edit_form(main_window: QMainWindow, container: QWidget):
     button_layout.addWidget(container.generate_btn)
     button_layout.addWidget(container.btn_submit)
 
+    # 设置控件默认禁用状态
     set_widget_unlock(main_window, container, main_window.unlock)
 
     main_layout = QVBoxLayout()
@@ -224,6 +242,7 @@ def on_file_selected(index: int, main_window: QMainWindow, container: QWidget):
 
 
 def set_widget_unlock(main_window: QMainWindow, container: QWidget, unlock: bool = False):
+    """根据unlock禁用或者解禁控件"""
     container.file_name.setDisabled(not unlock)
     container.aes_radio.setDisabled(not unlock)
     container.des_radio.setDisabled(not unlock)
@@ -238,6 +257,7 @@ def set_widget_unlock(main_window: QMainWindow, container: QWidget, unlock: bool
 
 
 def select_file(container: QWidget):
+    """从文件管理器选择文件(编辑模式禁用)"""
     file_dialog = QFileDialog(container)
     file_path, _ = file_dialog.getOpenFileName(container, "选择文件", "", "所有文件 (*.*)")
     if file_path:
@@ -247,18 +267,23 @@ def select_file(container: QWidget):
 
 
 def submit(main_window: QMainWindow, container: QWidget):
+    """提交编辑"""
     selected_algorithm = get_selected_algorithm(container)
     password: str = container.password.text()
     filename: str = container.file_name.text()
 
-    is_success, file_path_or_message = file_edit(password, main_window.current_file['id'], selected_algorithm, gcache.current_user['username'], filename)
+    is_success, file_path_or_message = file_edit(
+        password, main_window.current_file['id'], selected_algorithm, gcache.current_user['username'], filename
+    )
     MyQLabelTip(file_path_or_message, container, is_success)
 
 
 def unlock_file(main_window: QMainWindow, container: QWidget):
+    """解密文件"""
     file = main_window.current_file
     password: str = container.password.text()
 
+    # 校验文件加密密码
     is_success, message = varify_file_password(file, password)
     if is_success:
         set_widget_unlock(main_window, container, True)

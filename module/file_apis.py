@@ -39,8 +39,10 @@ def file_edit(password: str, file_id: int, selected_algorithm: str, username: st
         return False, "请输入加密密码！"
 
     org_file = db.get_file_by_id(file_id)
+    # 解密原本的加密文件
     decrypt_text, _ = decrypt_file(org_file['algorithm'], org_file['password'], file_id)
 
+    # 以新的加密算法重新加密文件
     is_success, iv_or_title, file_path_or_message, filled_password = encrypt_file(
         selected_algorithm,
         None,
@@ -51,6 +53,7 @@ def file_edit(password: str, file_id: int, selected_algorithm: str, username: st
         file_path=org_file['file_path'],
     )
     if is_success:
+        # 更新信息提交到数据库
         db.edit_file(file_id, filled_password, get_password_hash(filled_password), iv_or_title, selected_algorithm, filename)
         return True, f"更新文件{filename}-{selected_algorithm}加密成功"
     else:
@@ -58,6 +61,7 @@ def file_edit(password: str, file_id: int, selected_algorithm: str, username: st
 
 
 def varify_file_password(file: str, password: str):
+    """校验文件密码"""
     if not file:
         return False, "请先选择文件！"
     if not password:
@@ -95,6 +99,7 @@ def delete_file(current_user: dict, file: dict) -> bool:
 
 
 def download_file(file: dict, password: str, path: Path) -> tuple:
+    """保存文件到指定位置"""
     try:
         decrypt_text, _ = decrypt_file(file['algorithm'], password, file['id'])
         with open(path, 'wb') as f:
